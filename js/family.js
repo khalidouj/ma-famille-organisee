@@ -156,7 +156,7 @@ function famTick(){try{if(!SY.at||loveOpen||document.querySelector('.fm,.lv-ov')
 function remindPopup(c,key){const e=c.e;if(loveOpen)return;nfAdd('🔔',`${e.tm?e.tm+' · ':''}${e.t}`,'','r'+key);loveOpen=true;const when=e.tm?`à ${e.tm}`:'aujourd\'hui';
  const d=document.createElement('div');d.className='lv-ov';d.innerHTML=`<div class="lv-card"><div class="lv-ico">🔔</div><h3 style="margin:.2em 0">${c.k==='ev'?'Rendez-vous':'À faire'} · ${fdate(c.date)}${e.tm?' · '+e.tm:''}</h3><p class="lv-msg"><b>${esc(e.t)}</b></p><div>${pchips(e.w)}</div>${e.pl?`<div class="mini">📍 ${esc(e.pl)}</div>`:''}${e.nt?`<div class="mini" style="margin-top:6px">${esc(e.nt)}</div>`:''}<div style="margin-top:12px">${c.k==='tk'?'<button class="btn" id="rdn">✅ C\'est fait</button> ':''}<button class="btn ${c.k==='tk'?'alt':''}" id="rok">👍 Vu</button> <button class="btn alt" id="rsn">⏰ Dans 10 min</button></div></div>`;
  document.body.appendChild(d);try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(_){}
- if(S.pn&&window.Notification&&Notification.permission==='granted'&&document.hidden){devNotify('🔔 '+e.t,{body:(e.tm?e.tm+' · ':'')+(e.pl||'')});}
+ if(window.Notification&&Notification.permission==='granted'&&document.hidden){devNotify('🔔 '+e.t,{body:(e.tm?e.tm+' · ':'')+(e.pl||'')});}
  const close=()=>{loveOpen=false;d.remove();};
  $('#rok',d).onclick=()=>{S.rf[key]=1;save();close();};$('#rsn',d).onclick=()=>{S.rs=S.rs||{};S.rs[key]=Date.now()+600000;save();close();};
  const dn=$('#rdn',d);if(dn)dn.onclick=()=>{S.rf[key]=1;close();toggleTask(e.id);};}
@@ -319,7 +319,7 @@ function devNotify(t,o){o=Object.assign({icon:'icons/icon-192.png',badge:'icons/
 function nfList(){S.nf=S.nf||[];return S.nf;}
 function nfBadge(){const n=nfList().filter(x=>!x.r).length;const b=$('#nfB');if(b){b.textContent=n>9?'9+':n;b.style.display=n?'block':'none';}}
 function nfAdd(ic,t,go,key){const l=nfList();if(key&&l.some(x=>x.key===key))return;l.unshift({ts:Date.now(),ic,t,go:go||'',r:0,key:key||''});if(l.length>60)l.length=60;save();nfBadge();
- try{if(S.pn&&window.Notification&&Notification.permission==='granted'&&document.hidden)devNotify(trS(ic+' '+t),{tag:key||undefined});}catch(e){}}
+ try{if(window.Notification&&Notification.permission==='granted'&&document.hidden)devNotify(trS(ic+' '+t),{tag:key||undefined});}catch(e){}}
 function nfDaily(){try{if(!S.me&&!SY.at)return;const t=today();if(S.nfd===t)return;S.nfd=t;const a=itemsOn(t).filter(x=>x.k!=='bd'),tm=itemsOn(addD(t,1)).filter(x=>x.k!=='bd'),od=overdue().length;
  if(a.length)nfAdd('📅',`Aujourd'hui : ${a.length} à faire`,'', 'd'+t);
  if(od)nfAdd('⚠️',`${od} en retard`,'tasks','o'+t);
@@ -333,11 +333,10 @@ function openNotifs(){if($('#nfo'))return;const d=document.createElement('div');
  const l=nfList(),loc=isAr()?'ar-MA-u-nu-latn':'fr-FR';
  const perm=window.Notification&&Notification.permission==='default';
  d.innerHTML=`<div class="lv-card pf" style="text-align:start"><h3 style="margin:0 0 8px">🔔 Notifications</h3>${l.length?l.map((x,i)=>`<div class="nfi ${x.r?'':'nfu'}" data-i="${i}"><span>${x.ic}</span><div><b>${esc(x.t)}</b><span class="mini" data-nt>${esc(new Date(x.ts).toLocaleString(loc,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</span></div></div>`).join(''):'<div class="mini">Aucune notification pour l\'instant.</div>'}
- ${nfHelp()}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">${perm?'<button class="btn" id="nfPm">🔔 Activer sur le téléphone</button>':''}${window.Notification&&Notification.permission==='granted'?'<button class="btn alt" id="nfTs">🔔 Tester</button>':''}${l.length?'<button class="btn alt" id="nfClr">Vider</button>':''}<span style="flex:1"></span><button class="btn" id="nfX">Fermer</button></div></div>`;
+ ${nfHelp()}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">${perm?'<button class="btn" id="nfPm">🔔 Activer sur le téléphone</button>':''}${l.length?'<button class="btn alt" id="nfClr">Vider</button>':''}<span style="flex:1"></span><button class="btn" id="nfX">Fermer</button></div></div>`;
  document.body.appendChild(d);const close=()=>{d.remove();};d.onclick=e=>{if(e.target===d)close();};$('#nfX',d).onclick=close;
  d.querySelectorAll('.nfi').forEach(el=>el.onclick=()=>{const it=l[+el.dataset.i];close();if(it&&it.go)go(it.go);});
  const c=$('#nfClr',d);if(c)c.onclick=()=>{S.nf=[];save();nfBadge();close();};
- const ts=$('#nfTs',d);if(ts)ts.onclick=()=>{S.pn=1;save();devNotify('🔔 Ma famille',{body:'Les notifications fonctionnent ✅'});toast('Notification envoyée : regarde ta barre');};
  const pm=$('#nfPm',d);if(pm)pm.onclick=()=>{Notification.requestPermission().then(p=>{S.pn=p==='granted'?1:0;save();toast(p==='granted'?'Notifications activées ✅':'Notifications refusées');close();});};
  l.forEach(x=>x.r=1);save();nfBadge();}
 /* installation */
