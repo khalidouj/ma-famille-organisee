@@ -260,7 +260,7 @@ function syRerender(){if(document.querySelector('.lv-ov'))return;const a=documen
 const syStatTxt=()=>{const ar=isAr(),dt=SY.last?new Date(SY.last).toLocaleString(ar?'ar-MA-u-nu-latn':'fr-FR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):(ar?'لم تتم بعد':'pas encore');
  const st=ar?{ok:'✅ محدّث',sync:'🔄 جارٍ المزامنة…',off:'📴 بدون اتصال',err:'⚠️ '+trS(SY.err),idle:'…',out:''}:{ok:'✅ À jour',sync:'🔄 Synchronisation…',off:'📴 Hors connexion',err:'⚠️ '+SY.err,idle:'…',out:''};
  return (st[SY.st]||'')+(ar?' · آخر مزامنة : ':' · dernière synchro : ')+dt;};
-function syUI(){try{admVis();}catch(e){}const b=$('#pSync');if(b){const m={out:['☁️','Synchronisation : non connecté'],idle:['☁️','Synchronisation'],sync:['🔄','Synchronisation en cours…'],ok:['✅','Synchronisé'],off:['📴','Hors connexion : se synchronisera plus tard'],err:['⚠️','Problème de synchronisation']}[SY.st]||['☁️',''];b.textContent=SY.st==='ok'||SY.st==='idle'?'👤':'👤'+m[0];b.title='Mon compte · '+m[1];b.classList.toggle('dim',SY.st==='out');}
+function syUI(){try{admVis();}catch(e){}const b=$('#pSync');if(b){const m={out:['☁️','Synchronisation : non connecté'],idle:['☁️','Synchronisation'],sync:['🔄','Synchronisation en cours…'],ok:['✅','Synchronisé'],off:['📴','Hors connexion : se synchronisera plus tard'],err:['⚠️','Problème de synchronisation']}[SY.st]||['☁️',''];b.textContent='👤';b.dataset.st=(SY.st==='sync'||SY.st==='off'||SY.st==='err')?m[0]:'';b.title='Mon compte · '+m[1];b.classList.toggle('dim',SY.st==='out');}
  const t=$('#syStat');if(t)t.textContent=syStatTxt();}
 window.addEventListener('online',()=>syncNow());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow();});
