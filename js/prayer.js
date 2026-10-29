@@ -43,7 +43,7 @@ function prayerPopup(item,t){if(!SY.at||loveOpen||$('#pfo')||document.querySelec
 function prayerTick(){try{if(S.pp===0)return;const now=new Date(),t=ptoday(0);
  for(const p of PNAMES){const [k,n,e]=p,at=t[k],end=pwindowEnd(k,t);if(now<at||now>=end)continue;
   const key=today()+':'+k;if((S.pa&&S.pa[key])||prayedToday(k))continue;if(S.ps&&S.ps[key]&&Date.now()<S.ps[key])continue;
-  if(prayerPopup({k,n,e},t)){if(S.pn&&window.Notification&&Notification.permission==='granted'&&document.hidden){try{new Notification(trS('🕌 C\'est l\'heure de '+n),{body:S.nost?trS('Il est l\'heure de prier 🤲'):'Va prier, tes révisions t\'attendent ❤️'});}catch(_){}}}
+  if(prayerPopup({k,n,e},t)){if(S.pn&&window.Notification&&Notification.permission==='granted'&&document.hidden){devNotify(trS('🕌 C\'est l\'heure de '+n),{body:S.nost?trS('Il est l\'heure de prier 🤲'):'Va prier, tes révisions t\'attendent ❤️',tag:'pr'+n});}}
   break;}
  const pill=$('#pPray');if(pill){const nx=pnext();pill.innerHTML=`🕌 <span class="ibt">${nx.n} ${hhmm(nx.at)}</span>`;pill.title=`Prochaine prière : ${nx.n} à ${hhmm(nx.at)} (dans ${pin(nx.at-now)})`;}}catch(e){}}
 setInterval(prayerTick,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)prayerTick();});
