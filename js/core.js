@@ -49,11 +49,11 @@ function openPrefs(){if($('#pfo'))return;const d=document.createElement('div');d
   <div class="mini" style="margin-top:10px">Taille du texte : ${S.fs||100} %</div><div><button class="btn alt" id="fm">A −</button><button class="btn alt" id="fp">A +</button><button class="btn alt" id="fr">Normal</button></div>
   <div class="mini" style="margin-top:10px">Mode lecture (texte plus grand et plus aéré, colonne étroite)</div><div><button class="btn ${S.rd?'':'alt'}" id="rd">${S.rd?'✅ Activé':'Activer'}</button></div>
   <div class="mini" style="margin-top:10px">Langue / اللغة</div><div><button class="btn ${isAr()?'alt':''}" id="lgf" data-nt>Français</button><button class="btn ${isAr()?'':'alt'}" id="lga" data-nt>العربية</button></div>
-  <div class="mini" style="margin-top:10px">Études de droit (cours, quiz, codes)</div><div><button class="btn ${S.nost?'alt':''}" id="nst">${S.nost?'Masquées':'Affichées'}</button></div>
+  ${S.stl==='o'?'':`<div class="mini" style="margin-top:10px">Études de droit (cours, quiz, codes)</div><div><button class="btn ${S.nost?'alt':''}" id="nst">${S.nost?'Masquées':'Affichées'}</button></div>`}
   <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn alt" id="bkp">💾 Ma sauvegarde</button><span style="flex:1"></span><button class="btn" id="pfx">Fermer</button></div></div>`;
   d.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.theme=b.dataset.t;applyPrefs();save();draw();});
   $('#fm').onclick=()=>{S.fs=Math.max(80,(S.fs||100)-10);applyPrefs();save();draw();};$('#fp').onclick=()=>{S.fs=Math.min(160,(S.fs||100)+10);applyPrefs();save();draw();};$('#fr').onclick=()=>{S.fs=100;applyPrefs();save();draw();};
-  $('#rd').onclick=()=>{S.rd=S.rd?0:1;applyPrefs();save();draw();};$('#lgf').onclick=()=>{d.remove();setLang('fr');};$('#lga').onclick=()=>{d.remove();setLang('ar');};$('#nst').onclick=()=>{S.nsa=0;S.nost=S.nost?0:1;flush();langApply();renderTabs((location.hash.slice(1).split('/')[0])||'');draw();};$('#pfx').onclick=()=>d.remove();$('#bkp').onclick=()=>{d.remove();go('data');};};
+  $('#rd').onclick=()=>{S.rd=S.rd?0:1;applyPrefs();save();draw();};$('#lgf').onclick=()=>{d.remove();setLang('fr');};$('#lga').onclick=()=>{d.remove();setLang('ar');};if($('#nst'))$('#nst').onclick=()=>{S.nsa=0;S.nost=S.nost?0:1;flush();langApply();renderTabs((location.hash.slice(1).split('/')[0])||'');draw();};$('#pfx').onclick=()=>d.remove();$('#bkp').onclick=()=>{d.remove();go('data');};};
  d.onclick=e=>{if(e.target===d)d.remove();};document.body.appendChild(d);draw();}
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function touchStreak(){const t=today();if(S.last===t)return;const y=ld(new Date(Date.now()-DAY));S.streak=S.last===y?S.streak+1:1;S.last=t;}
@@ -90,7 +90,7 @@ function dailySet(n=15){const all=allQuestions();const due=shuffle(all.filter(x=
 /* ---------- router ---------- */
 function go(h){location.hash=h;}
 window.addEventListener('hashchange',route);
-function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,c]=h.split('/');document.body.classList.toggle('study',['e','exam','review','science','search','code','penal','spirit','today','weak','etudes'].includes(a));renderTabs(a||'');
+function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,c]=h.split('/');if(S.stl==='o'&&['e','exam','review','science','search','code','penal','today','weak','etudes'].includes(a)){location.hash='';return;}document.body.classList.toggle('study',['e','exam','review','science','search','code','penal','spirit','today','weak','etudes'].includes(a));renderTabs(a||'');
  if(a==='e')return viewEtape(+b,c||'palais');
  if(a==='exam')return viewExam();
  if(a==='review')return viewReview();

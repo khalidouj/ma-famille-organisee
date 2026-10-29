@@ -51,6 +51,8 @@ h2{margin:1.4em 0 .5em}
 .lv-ref{font-weight:800;color:#2e7d6b}
 .lv-nm{font-size:.82em;opacity:.8;margin-top:2px;font-style:normal}
 .lv-tx{margin-top:8px;font-size:1.04em}
+.lv-ar{direction:rtl;text-align:right;font-family:'Amiri','Noto Naskh Arabic','Scheherazade New','Traditional Arabic',serif;font-size:1.3em;line-height:2;font-style:normal;margin-top:8px}
+.ar .lv-q{border-left:0;border-right:4px solid #f4b400;text-align:right;font-style:normal}
 .lv-tr{margin-top:6px;font-size:.72em;opacity:.65;font-style:normal}
 .lv-d{text-align:left;margin:8px 0;background:rgba(46,125,107,.1);border-radius:12px;padding:8px 12px}
 .lv-d summary{cursor:pointer;font-weight:700}
@@ -180,7 +182,7 @@ mark{background:#ffe38a;color:#000;border-radius:4px}
 @media(max-width:600px){.logo span{display:none}.top{gap:8px;padding:8px 12px}h1{font-size:1.5rem}.hero h1{font-size:1.5rem}.top{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 button.ib.dim{opacity:.55}
-.nost #pLvl,.nost #pStreak,.nost #pSpirit,.nost [onclick="go('etudes')"]{display:none!important}
+.nost #pLvl,.nost #pStreak,.nost [onclick="go('etudes')"]{display:none!important}
 [dir=rtl] body{text-align:right}[dir=rtl] [style*="text-align:left"]{text-align:right!important}
 [dir=rtl] #cp,[dir=rtl] #cn{transform:scaleX(-1)}
 [dir=rtl] .toast{direction:rtl}
