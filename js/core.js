@@ -35,7 +35,7 @@ function adhanStop(){try{if(ADHA){ADHA.pause();ADHA.currentTime=0;}}catch(e){}AD
 async function adhanPlay(test){if(!test&&S.ad===0)return false;if(!ADH)await adhanLoad();if(!ADH)return false;adhanStop();try{const u=URL.createObjectURL(ADH);ADHA=new Audio(u);ADHA.volume=Math.min(1,Math.max(.1,(S.av||80)/100));ADHA.onended=()=>{try{URL.revokeObjectURL(u);}catch(e){}ADHA=null;};await ADHA.play();return true;}catch(e){ADHA=null;return false;}}
 async function load(){let a=null,b=null;try{a=JSON.parse(localStorage.getItem('gp-v1')||'null');}catch(e){}try{b=await IDB.get();}catch(e){}
  const pick=(a&&b)?((b.ut||0)>(a.ut||0)?b:a):(a||b);if(pick)S={...S,...pick};applyPrefs();}
-let st;function flush(){S.ut=Date.now();const j=JSON.stringify(S);try{localStorage.setItem('gp-v1',j);}catch(e){}try{IDB.set(JSON.parse(j));}catch(e){}}
+let st;function flush(){let ch=false;try{ch=typeof stampAll==='function'&&stampAll();}catch(e){}S.ut=Date.now();const j=JSON.stringify(S);try{localStorage.setItem('gp-v1',j);}catch(e){}try{IDB.set(JSON.parse(j));}catch(e){}if(ch&&typeof syncSoon==='function')syncSoon();}
 function save(){clearTimeout(st);st=setTimeout(flush,300);}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(st);flush();}});
 window.addEventListener('pagehide',()=>{clearTimeout(st);flush();});
@@ -106,7 +106,8 @@ function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,
  if(a==='prayer')return viewPrayer();
  if(a==='weak')return viewWeak();
  if(a==='data')return viewData();
+ if(a==='sync')return viewSync();
  if(a==='art'){viewCode(b);const i=artIdx(b).get(decodeURIComponent(c||'').toLowerCase());if(i!==undefined)ccArt(i,()=>go(b==='civil'?'code':'penal'));return;}
- viewDash();}
+ viewDash();syPromo();}
 function setApp(html){const a=$('#app');a.innerHTML=html;a.firstElementChild&&0;observe();}
 function observe(){const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target);}}),{threshold:.1});document.querySelectorAll('.pt,.tle').forEach((el,i)=>{el.style.transitionDelay=(i%6)*60+'ms';io.observe(el);});}

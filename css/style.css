@@ -179,3 +179,4 @@ canvas#conf{position:fixed;inset:0;pointer-events:none;z-index:99}
 mark{background:#ffe38a;color:#000;border-radius:4px}
 @media(max-width:600px){.logo span{display:none}.top{gap:8px;padding:8px 12px}h1{font-size:1.5rem}.hero h1{font-size:1.5rem}.top{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+button.ib.dim{opacity:.55}

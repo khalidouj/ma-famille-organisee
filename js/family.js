@@ -141,7 +141,7 @@ function viewPerson(id){const p=person(id);if(!p)return viewFam();const t=today(
  bindRows($('#app'));$('#pe').onclick=()=>pForm(id);$('#pa').onclick=()=>{evForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};$('#pt').onclick=()=>{tkForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};}
 /* ---- navigation bar ---- */
 const TABS=[['','🏠','Aujourd\'hui'],['cal','📅','Agenda'],['tasks','✅','Tâches'],['fam','👪','Famille'],['etudes','📚','Études']];
-function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const cur=['','cal','tasks','fam','etudes'].includes(a)?a:(a==='p'?'fam':['e','exam','review','science','search','code','penal','spirit','today','weak'].includes(a)?'etudes':a==='data'||a==='prayer'?null:'');
+function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const cur=['','cal','tasks','fam','etudes'].includes(a)?a:(a==='p'?'fam':['e','exam','review','science','search','code','penal','spirit','today','weak'].includes(a)?'etudes':a==='data'||a==='prayer'||a==='sync'?null:'');
  nav.innerHTML=TABS.map(([h,e,l])=>`<button class="tb ${h===cur?'on':''}" onclick="go('${h}')"><span>${e}</span><small>${l}</small></button>`).join('');}
 /* ---- rappels ---- */
 function fireAt(date,tm,rm){if(rm==='m')return dtm(date,'08:00');const base=dtm(date,tm||'08:00');return new Date(base.getTime()-Number(rm)*60000);}
@@ -162,3 +162,136 @@ function remindPopup(c,key){const e=c.e;if(loveOpen)return;loveOpen=true;const w
  const dn=$('#rdn',d);if(dn)dn.onclick=()=>{S.rf[key]=1;close();toggleTask(e.id);};}
 setInterval(famTick,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)famTick();});
 
+/* ---------- SYNCHRO ---------- */
+const SB={url:'https://ucbzuvvxlyunmevssfji.supabase.co',key:'sb_publishable_o5-12DDt7fx7eR4lsWQOuA_hP7s7V0S'};
+const SH=['fam','ev','tk'],EXC=['fam','ev','tk','_h','dl','_ph','pt','rf','rs','bk','ut'];
+let SY=(()=>{try{return JSON.parse(localStorage.getItem('gp-sb')||'null')||{};}catch(e){return{};}})();
+SY.st=SY.at?'idle':'out';SY.err='';
+function sySave(){try{localStorage.setItem('gp-sb',JSON.stringify({at:SY.at,rt:SY.rt,exp:SY.exp,uid:SY.uid,email:SY.email,fid:SY.fid,code:SY.code,fname:SY.fname,last:SY.last,bound:SY.bound}));}catch(e){}}
+function hsh(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h.toString(36);}
+function cj(o){if(Array.isArray(o))return '['+o.map(cj).join(',')+']';if(o&&typeof o==='object')return '{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+cj(o[k])).join(',')+'}';return JSON.stringify(o===undefined?null:o);}
+const sharedDoc=()=>({fam:S.fam||[],ev:S.ev||[],tk:S.tk||[],dl:S.dl||{}});
+const sharedKey=d=>{d=d||{};return cj({fam:[...(d.fam||[])].sort((a,b)=>a.id<b.id?-1:1),ev:[...(d.ev||[])].sort((a,b)=>a.id<b.id?-1:1),tk:[...(d.tk||[])].sort((a,b)=>a.id<b.id?-1:1),dl:d.dl||{}});};
+function personalDoc(){const o={};Object.keys(S).forEach(k=>{if(!EXC.includes(k))o[k]=S[k];});return o;}
+/* repère les éléments modifiés / supprimés (sans toucher au reste de l'appli) */
+function stampAll(){let ch=false;const first=!S._h;const H=S._h=S._h||{};S.dl=S.dl||{};const seen={},now=Date.now();
+ SH.forEach(k=>{(S[k]||[]).forEach(it=>{if(!it||!it.id)return;seen[it.id]=1;const {_u,...rest}=it;const h=hsh(JSON.stringify(rest));
+  if(H[it.id]!==h){H[it.id]=h;it._u=(first&&_u)?_u:(first?(S.ut||1):now);ch=true;}});});
+ Object.keys(H).forEach(id=>{if(!seen[id]){delete H[id];S.dl[id]=now;ch=true;}});
+ const old=now-90*DAY;Object.keys(S.dl).forEach(id=>{if(S.dl[id]<old)delete S.dl[id];});
+ const ph=hsh(cj(personalDoc()));
+ if(S._ph===undefined){S._ph=ph;S.pt=S.pt||0;}else if(S._ph!==ph){S._ph=ph;S.pt=now;ch=true;}
+ return ch;}
+/* fusion de la partie partagée : le plus récent gagne, élément par élément */
+function mergeShared(rem){rem=rem||{};const H=S._h=S._h||{};S.dl=S.dl||{};const rdl=rem.dl||{};
+ Object.keys(rdl).forEach(id=>{if(!(S.dl[id]>=rdl[id]))S.dl[id]=rdl[id];});
+ let changed=false;
+ SH.forEach(k=>{const m=new Map();(S[k]||[]).forEach(x=>m.set(x.id,x));
+  (rem[k]||[]).forEach(r=>{const l=m.get(r.id);if(!l||(r._u||0)>(l._u||0))m.set(r.id,r);});
+  const out=[];m.forEach((v,id)=>{if(S.dl[id]&&S.dl[id]>=(v._u||0)){delete H[id];return;}out.push(v);});
+  if(cj(out)!==cj(S[k]||[])){changed=true;S[k]=out;}
+  out.forEach(it=>{const {_u,...rest}=it;H[it.id]=hsh(JSON.stringify(rest));});});
+ return changed;}
+/* ---- réseau ---- */
+const FR_ERR=[['Invalid login credentials','E-mail ou mot de passe incorrect.'],['already registered','Ce mail a déjà un compte : choisis « Me connecter ».'],['at least 6','Mot de passe : 6 caractères minimum.'],['rate limit','Trop d’essais. Réessaie dans quelques minutes.'],['valid email','Cette adresse e-mail n’est pas valide.'],['Email not confirmed','Mail non confirmé : vérifie ta boîte mail.'],['Code inconnu','Code inconnu : vérifie les lettres et chiffres.'],['Signups not allowed','Les inscriptions sont désactivées sur le serveur.']];
+const frErr=m=>{m=String(m||'');const f=FR_ERR.find(x=>m.includes(x[0]));return f?f[1]:m;};
+async function sbReq(path,o={}){const h={apikey:SB.key,'Content-Type':'application/json',...(o.h||{})};if(o.auth!==false&&SY.at)h.Authorization='Bearer '+SY.at;
+ let r;try{r=await fetch(SB.url+path,{method:o.m||'GET',headers:h,body:o.b!==undefined?JSON.stringify(o.b):undefined});}catch(e){const x=new Error('Pas de connexion internet');x.net=1;throw x;}
+ const t=await r.text();let j=null;try{j=t?JSON.parse(t):null;}catch(e){}
+ if(!r.ok){const x=new Error((j&&(j.msg||j.message||j.error_description||j.error))||('Erreur '+r.status));x.status=r.status;x.auth=r.status===401;throw x;}
+ return j;}
+function sbSession(j){SY.at=j.access_token;SY.rt=j.refresh_token;SY.exp=Date.now()+(j.expires_in||3600)*1000;if(j.user){SY.uid=j.user.id;SY.email=j.user.email||SY.email;}sySave();}
+async function syRefresh(){if(!SY.rt)throw Object.assign(new Error('Session expirée'),{auth:1,out:1});
+ try{sbSession(await sbReq('/auth/v1/token?grant_type=refresh_token',{m:'POST',auth:false,b:{refresh_token:SY.rt}}));}
+ catch(e){if(e.net)throw e;SY.at='';SY.rt='';sySave();e.out=1;throw e;}}
+async function sbData(path,o){if(SY.exp&&SY.exp-60000<Date.now())await syRefresh();
+ try{return await sbReq(path,o);}catch(e){if(e.auth&&!e.net){await syRefresh();return await sbReq(path,o);}throw e;}}
+async function syLoadFamily(){const r=await sbData('/rest/v1/members?select=family_id,families(name,code)&user_id=eq.'+SY.uid);
+ if(r&&r[0]){SY.fid=r[0].family_id;SY.code=r[0].families&&r[0].families.code;SY.fname=r[0].families&&r[0].families.name;}else{SY.fid=SY.code=SY.fname='';}sySave();}
+async function syAuth(mode,email,pw){const p=mode==='up'?'/auth/v1/signup':'/auth/v1/token?grant_type=password';
+ const j=await sbReq(p,{m:'POST',auth:false,b:{email,password:pw}});
+ if(!j.access_token){const e=new Error('Compte créé. Confirme ton adresse via le mail reçu, puis connecte-toi.');e.info=1;throw e;}
+ sbSession(j);SY.email=email;SY.st='idle';sySave();await syLoadFamily();}
+/* ---- synchronisation ---- */
+let SYBUSY=false,SYAGAIN=false,syT=null,SYCH=false;
+function syncSoon(){if(!SY.at)return;clearTimeout(syT);syT=setTimeout(()=>syncNow(),2500);}
+async function syFamily(){for(let i=0;i<4;i++){
+  const r=await sbData('/rest/v1/family_data?select=data,updated_at&family_id=eq.'+SY.fid);const row=r&&r[0];if(!row)throw new Error('Famille introuvable');
+  if(mergeShared(row.data)){SYCH=true;flush();}
+  if(sharedKey(sharedDoc())===sharedKey(row.data))return;
+  const res=await sbData('/rest/v1/family_data?family_id=eq.'+SY.fid+'&updated_at=eq.'+encodeURIComponent(row.updated_at),{m:'PATCH',h:{Prefer:'return=representation'},b:{data:sharedDoc(),updated_at:new Date().toISOString()}});
+  if(res&&res.length)return;}}
+const isO=x=>x&&typeof x==='object'&&!Array.isArray(x);
+const subst=d=>!!(d&&(d.xp>0||d.exam||Object.keys(d.items||{}).length||Object.keys(d.pg||{}).length));
+/* fusion à 3 voies : on garde ce qui a changé de chaque côté depuis la dernière synchro */
+function merge3(b,l,r,lw,k){const cl=cj(l),cr=cj(r);if(cl===cr)return l;const cb=cj(b);if(cb===cl)return r;if(cb===cr)return l;
+ if(isO(l)&&isO(r)){const o={},bo=isO(b)?b:{};new Set([...Object.keys(l),...Object.keys(r)]).forEach(x=>{const il=x in l,ir=x in r;
+  if(il&&ir)o[x]=merge3(bo[x],l[x],r[x],lw,x);
+  else if(il){if(!(x in bo)||cj(bo[x])!==cj(l[x]))o[x]=l[x];}
+  else{if(!(x in bo)||cj(bo[x])!==cj(r[x]))o[x]=r[x];}});return o;}
+ if(typeof l==='number'&&typeof r==='number')return Math.max(l,r);
+ if(k==='last'&&typeof l==='string'&&typeof r==='string')return l>r?l:r;
+ return lw?l:r;}
+async function syUser(){for(let i=0;i<4;i++){
+ const r=await sbData('/rest/v1/user_data?select=data,updated_at&user_id=eq.'+SY.uid);const row=r&&r[0];const per=personalDoc();
+ if(!row||!row.data||!row.data.d){await sbData('/rest/v1/user_data',{m:'POST',h:{Prefer:'resolution=merge-duplicates,return=minimal'},b:{user_id:SY.uid,data:{pt:S.pt||0,d:per},updated_at:new Date().toISOString()}});await IDB.setK('syb',per);return;}
+ const rd=row.data.d,rp=row.data.pt||0,lp=S.pt||0,first=SY.bound!==SY.uid;
+ const base=first?undefined:await IDB.getK('syb');
+ const lw=(first&&!subst(per))?false:lp>rp;
+ const merged=merge3(base,per,rd,lw,'');
+ if(cj(merged)!==cj(per)){try{localStorage.setItem('gp-pre-sync',JSON.stringify(S));}catch(e){}Object.assign(S,merged);SYCH=true;}
+ S.pt=Math.max(lp,rp);S._ph=hsh(cj(personalDoc()));if(SYCH)flush();
+ if(cj(merged)===cj(rd)){await IDB.setK('syb',merged);return;}
+ const res=await sbData('/rest/v1/user_data?user_id=eq.'+SY.uid+'&updated_at=eq.'+encodeURIComponent(row.updated_at),{m:'PATCH',h:{Prefer:'return=representation'},b:{data:{pt:S.pt,d:merged},updated_at:new Date().toISOString()}});
+ if(res&&res.length){await IDB.setK('syb',merged);return;}}}
+async function syncNow(){if(!SY.at||SYBUSY){if(SYBUSY)SYAGAIN=true;return;}
+ SYBUSY=true;SY.st='sync';syUI();SYCH=false;
+ try{try{clearTimeout(st);flush();}catch(e){}
+  if(SY.fid)await syFamily();
+  await syUser();
+  SY.last=Date.now();SY.err='';SY.st='ok';SY.bound=SY.uid;sySave();}
+ catch(e){SY.err=frErr(e.message);SY.st=e.net?'off':'err';if(e.out){SY.st='out';SY.err='Session expirée : reconnecte-toi.';}}
+ SYBUSY=false;syUI();
+ if(SYCH){applyPrefs();hud();syRerender();}
+ if(SYAGAIN){SYAGAIN=false;syncSoon();}}
+function syRerender(){if(document.querySelector('.lv-ov'))return;const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&$('#app').contains(a))return;
+ const h=location.hash.slice(1).split('/')[0];if(['sync','data','prayer','spirit','exam','review','art','e'].includes(h))return;const y=window.scrollY;route();window.scrollTo(0,y);}
+const syStatTxt=()=>({ok:'✅ À jour',sync:'🔄 Synchronisation…',off:'📴 Hors connexion',err:'⚠️ '+SY.err,idle:'…',out:''}[SY.st]||'')+' · dernière synchro : '+(SY.last?new Date(SY.last).toLocaleString('fr-FR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'pas encore');
+function syUI(){const b=$('#pSync');if(b){const m={out:['☁️','Synchronisation : non connecté'],idle:['☁️','Synchronisation'],sync:['🔄','Synchronisation en cours…'],ok:['✅','Synchronisé'],off:['📴','Hors connexion : se synchronisera plus tard'],err:['⚠️','Problème de synchronisation']}[SY.st]||['☁️',''];b.textContent=m[0];b.title=m[1];b.classList.toggle('dim',SY.st==='out');}
+ const t=$('#syStat');if(t)t.textContent=syStatTxt();}
+window.addEventListener('online',()=>syncNow());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow();});
+setInterval(()=>{if(!document.hidden)syncNow();},45000);
+/* ---- écran ---- */
+let syMode='in';
+function viewSync(){setApp(`<div class="banner" style="--c:#0277bd"><h1>☁️ Synchronisation</h1><div class="mini" style="color:#fff;opacity:.9">Retrouve tout sur ton téléphone et ton PC</div></div><div id="syBody"></div>`);syFill();}
+function syFill(){const d=$('#syBody');if(!d)return;
+ if(!SY.at){d.innerHTML=`<div class="card" style="margin:12px 0"><b>Ne perds plus rien, et partage avec ta famille</b><div class="mini">Avec un compte, ta progression, ton agenda, tes tâches et ta famille se retrouvent sur tous tes appareils. Les rendez-vous et tâches sont partagés avec les personnes de ta famille que tu invites.</div>
+  <div class="row" style="margin-top:10px"><button class="btn ${syMode==='in'?'':'alt'}" id="syIn">Me connecter</button><button class="btn ${syMode==='up'?'':'alt'}" id="syUp">Créer mon compte</button></div>
+  <input class="srch" id="syE" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" placeholder="Adresse e-mail" style="margin-top:10px"><input class="srch" id="syP" type="password" autocomplete="${syMode==='up'?'new-password':'current-password'}" placeholder="Mot de passe (6 caractères minimum)" style="margin-top:8px">
+  <div class="mini" id="syM" style="margin-top:8px;color:#c62828">${esc(SY.err||'')}</div><button class="btn" id="syGo" style="margin-top:8px">${syMode==='up'?'Créer mon compte':'Me connecter'}</button></div>`;
+  $('#syIn').onclick=()=>{syMode='in';SY.err='';syFill();};$('#syUp').onclick=()=>{syMode='up';SY.err='';syFill();};
+  const go1=async()=>{const e=$('#syE').value.trim(),p=$('#syP').value;if(!e||!p){$('#syM').textContent='Écris ton e-mail et ton mot de passe.';return;}
+   $('#syGo').disabled=true;$('#syM').style.color='#666';$('#syM').textContent='Un instant…';
+   try{await syAuth(syMode,e,p);SY.err='';toast('Connecté ✅');syUI();syncNow();viewSync();}catch(x){$('#syGo').disabled=false;$('#syM').style.color=x.info?'#2e7d32':'#c62828';$('#syM').textContent=x.net?x.message:frErr(x.message);}};
+  $('#syGo').onclick=go1;$('#syP').onkeydown=e=>{if(e.key==='Enter')go1();};return;}
+ let h=`<div class="card" style="margin:12px 0"><b>Connecté : ${esc(SY.email||'')}</b><div class="mini" id="syStat">${esc(syStatTxt())}</div><div class="row" style="margin-top:8px"><button class="btn" id="syNow">🔄 Synchroniser maintenant</button><button class="btn alt" id="syOut">Me déconnecter</button></div></div>`;
+ if(!SY.fid)h+=`<div class="card" style="margin:12px 0"><b>👪 Ta famille</b><div class="mini">La première personne crée la famille et reçoit un code. L’autre personne (toi ou ton mari) entre ce code sur son appareil.</div>
+  <input class="srch" id="syFn" placeholder="Nom de la famille" value="Notre famille" style="margin-top:10px"><button class="btn" id="syCr" style="margin-top:8px">➕ Créer la famille</button>
+  <div class="mini" style="margin-top:14px"><b>Ou rejoindre une famille existante :</b></div><input class="srch" id="syCd" placeholder="Code reçu (ex : 7F3A9C21BD)" autocapitalize="characters" style="margin-top:6px"><button class="btn alt" id="syJn" style="margin-top:8px">🔗 Rejoindre avec le code</button><div class="mini" id="syM2" style="margin-top:8px;color:#c62828"></div></div>`;
+ else h+=`<div class="card" style="margin:12px 0"><b>👪 ${esc(SY.fname||'Ma famille')}</b><div class="mini">Code à donner pour inviter quelqu’un :</div><div style="font:700 1.6rem/1.2 monospace;letter-spacing:.12em;margin:8px 0;user-select:all">${esc(SY.code||'')}</div>
+  <div class="row"><button class="btn" id="syCp">📋 Copier le code</button><button class="btn alt" id="syShare">📤 Envoyer</button></div><div class="mini" style="margin-top:10px"><b>Partagé dans la famille :</b> personnes, rendez-vous et tâches.<br><b>Reste personnel :</b> tes cours, ta progression, tes réglages (mais retrouvés sur tous tes appareils).</div>
+  <div class="mini" style="margin-top:12px"><button class="btn alt" id="syLv">Quitter cette famille</button></div></div>`;
+ h+=`<div class="mini" style="margin:6px 0 14px">Ça marche aussi sans internet : tout est gardé sur l’appareil et se met à jour dès que la connexion revient.</div>`;
+ d.innerHTML=h;
+ $('#syNow').onclick=()=>{syncNow();toast('Synchronisation…');};
+ $('#syOut').onclick=()=>{if(!confirm('Te déconnecter ? Tes données restent sur cet appareil.'))return;SY.at=SY.rt='';SY.fid=SY.code=SY.fname='';SY.st='out';sySave();syUI();viewSync();};
+ const err=m=>{const e=$('#syM2');if(e)e.textContent=m;};
+ if(!SY.fid){$('#syCr').onclick=async()=>{$('#syCr').disabled=true;try{const r=await sbData('/rest/v1/rpc/create_family',{m:'POST',b:{n:$('#syFn').value}});SY.fid=r.id;SY.code=r.code;SY.fname=r.name;sySave();toast('Famille créée ✅');await syncNow();viewSync();}catch(x){$('#syCr').disabled=false;err(frErr(x.message));}};
+  $('#syJn').onclick=async()=>{const c=$('#syCd').value.trim();if(!c){err('Entre le code.');return;}$('#syJn').disabled=true;try{const r=await sbData('/rest/v1/rpc/join_family',{m:'POST',b:{c}});SY.fid=r.id;SY.code=r.code;SY.fname=r.name;sySave();toast('Famille rejointe ✅');await syncNow();viewSync();}catch(x){$('#syJn').disabled=false;err(frErr(x.message));}};}
+ else{$('#syCp').onclick=()=>{try{navigator.clipboard.writeText(SY.code);toast('Code copié');}catch(e){toast(SY.code);}};
+  $('#syShare').onclick=()=>{const t=`Rejoins notre famille sur l’appli : ouvre ${location.origin+location.pathname} → ☁️ → Créer mon compte, puis entre le code ${SY.code}`;if(navigator.share)navigator.share({text:t}).catch(()=>{});else{try{navigator.clipboard.writeText(t);toast('Message copié');}catch(e){}}};
+  $('#syLv').onclick=async()=>{if(!confirm('Quitter cette famille ? Les données restent sur cet appareil mais ne seront plus partagées.'))return;try{await sbData('/rest/v1/members?user_id=eq.'+SY.uid+'&family_id=eq.'+SY.fid,{m:'DELETE'});SY.fid=SY.code=SY.fname='';sySave();viewSync();}catch(x){toast(frErr(x.message));}};}}
+function syPromo(){if(SY.at||(S.syp&&S.syp>Date.now()))return;const a=$('#app');if(!a||$('#syp'))return;const d=document.createElement('div');d.id='syp';d.className='card';d.style.margin='12px 0';
+ d.innerHTML=`<b>☁️ Retrouve tout sur ton téléphone et ton PC</b><div class="mini">Crée un compte gratuit : tes données ne se perdent plus et se partagent avec ta famille.</div><div class="row" style="margin-top:8px"><button class="btn" id="sypo">Configurer</button><button class="btn alt" id="sypl">Plus tard</button></div>`;
+ a.insertBefore(d,a.children[1]||null);$('#sypo').onclick=()=>go('sync');$('#sypl').onclick=()=>{S.syp=Date.now()+7*DAY;save();d.remove();};}
