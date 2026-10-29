@@ -325,11 +325,15 @@ function nfDaily(){try{if(!S.me&&!SY.at)return;const t=today();if(S.nfd===t)retu
  if(od)nfAdd('⚠️',`${od} en retard`,'tasks','o'+t);
  if(tm.length)nfAdd('🌙',`Demain : ${tm.length} à prévoir`,'cal','m'+t);
  itemsOn(t).filter(x=>x.k==='bd').forEach(x=>nfAdd('🎂',String(x.t||''),'', 'b'+t+x.t));save();}catch(e){}}
+function nfHelp(){const ios=/iphone|ipad/i.test(navigator.userAgent),sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+ if(!window.Notification||(ios&&!sa))return '<div class="card mini" style="margin-top:10px">📵 '+(ios&&!sa?'Sur iPhone, installe d\'abord l\'appli : touche Partager puis « Sur l\'écran d\'accueil », rouvre-la depuis l\'icône, puis reviens ici.':'Ce navigateur ne permet pas les notifications. Ouvre l\'appli dans Chrome, ou installe-la sur l\'écran d\'accueil.')+'</div>';
+ if(Notification.permission==='denied')return '<div class="card mini" style="margin-top:10px">🚫 Les notifications sont bloquées pour cette appli. Pour les autoriser : appui long sur l\'icône de l\'appli → Infos de l\'appli → Notifications → Autoriser. (Ou dans Chrome : ⋮ → Paramètres → Paramètres des sites → Notifications → autoriser ce site.) Puis rouvre cette fenêtre.</div>';
+ return '';}
 function openNotifs(){if($('#nfo'))return;const d=document.createElement('div');d.className='lv-ov';d.id='nfo';
  const l=nfList(),loc=isAr()?'ar-MA-u-nu-latn':'fr-FR';
  const perm=window.Notification&&Notification.permission==='default';
  d.innerHTML=`<div class="lv-card pf" style="text-align:start"><h3 style="margin:0 0 8px">🔔 Notifications</h3>${l.length?l.map((x,i)=>`<div class="nfi ${x.r?'':'nfu'}" data-i="${i}"><span>${x.ic}</span><div><b>${esc(x.t)}</b><span class="mini" data-nt>${esc(new Date(x.ts).toLocaleString(loc,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</span></div></div>`).join(''):'<div class="mini">Aucune notification pour l\'instant.</div>'}
- <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">${perm?'<button class="btn" id="nfPm">🔔 Activer sur le téléphone</button>':''}${window.Notification&&Notification.permission==='granted'?'<button class="btn alt" id="nfTs">🔔 Tester</button>':''}${l.length?'<button class="btn alt" id="nfClr">Vider</button>':''}<span style="flex:1"></span><button class="btn" id="nfX">Fermer</button></div></div>`;
+ ${nfHelp()}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">${perm?'<button class="btn" id="nfPm">🔔 Activer sur le téléphone</button>':''}${window.Notification&&Notification.permission==='granted'?'<button class="btn alt" id="nfTs">🔔 Tester</button>':''}${l.length?'<button class="btn alt" id="nfClr">Vider</button>':''}<span style="flex:1"></span><button class="btn" id="nfX">Fermer</button></div></div>`;
  document.body.appendChild(d);const close=()=>{d.remove();};d.onclick=e=>{if(e.target===d)close();};$('#nfX',d).onclick=close;
  d.querySelectorAll('.nfi').forEach(el=>el.onclick=()=>{const it=l[+el.dataset.i];close();if(it&&it.go)go(it.go);});
  const c=$('#nfClr',d);if(c)c.onclick=()=>{S.nf=[];save();nfBadge();close();};
