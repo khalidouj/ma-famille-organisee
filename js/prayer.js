@@ -30,11 +30,11 @@ function prayerCard(){const nx=pnext();const t=ptoday(0);const pr=PNAMES.filter(
  <div class="mini">📍 ${esc(pcfg().name)} · ${pr}/5 aujourd'hui · touche pour régler</div></div>`;}
 function pwindowEnd(k,t){return {fajr:t.sunrise,dhuhr:t.asr,asr:t.maghrib,maghrib:t.isha,isha:new Date(t.isha.getTime()+3*3600e3)}[k];}
 const PMSG=["Mon amour, c'est l'heure de {n} 🕌 Pose tout et va prier : tes révisions t'attendront, et Allah facilitera ce que tu as appris. Je t'aime 💖","Ma chérie, {n} vient d'entrer 🤲 Une petite pause avec Allah, ça fait du bien au cœur et à la tête. Je suis fier de toi.","Coucou mon cœur 💕 C'est l'heure de {n}. Va te ressourcer, je t'attends ! Les articles ne vont pas s'enfuir 😄","C'est l'heure de {n} 🕌 Prier à l'heure, c'est ta force. Tout va bien se passer, in châ' Allah. Je pense à toi 🤍"];
-function prayerPopup(item,t){if(loveOpen||$('#pfo')||document.querySelector('.fm'))return false;loveOpen=true;
+function prayerPopup(item,t){if(!SY.at||loveOpen||$('#pfo')||document.querySelector('.fm'))return false;loveOpen=true;
  const msg=S.nost?'Il est l\'heure de prier 🤲':PMSG[Math.floor(Math.random()*PMSG.length)].replace('{n}',item.n);const r=relPick(['prayer']);
  const d=document.createElement('div');d.className='lv-ov';
  d.innerHTML=`<div class="lv-card"><div class="lv-ico">🕌</div><h3 style="margin:.2em 0">C'est l'heure de ${item.n} · ${hhmm(t[item.k])}</h3><p class="lv-msg">${esc(msg)}</p>${r?relHtml(r,false):''}${S.nost?'':'<div class="lv-sig">— Khalid ❤️</div>'}<button class="btn" id="pgo">🤲 J'y vais</button> <button class="btn alt" id="psn">⏰ Dans 10 min</button></div>`;
- document.body.appendChild(d);try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}adhanPlay(false).then(ok=>{if(ok){const b=document.createElement('button');b.className='btn alt';b.textContent='🔇 Arrêter le son';b.onclick=()=>{adhanStop();b.remove();};const host=$('#psn',d);host&&host.after(' ',b);}});
+ document.body.appendChild(d);try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}adhanPlay(false,item.k).then(ok=>{if(ok){const b=document.createElement('button');b.className='btn alt';b.textContent='🔇 Arrêter le son';b.onclick=()=>{adhanStop();b.remove();};const host=$('#psn',d);host&&host.after(' ',b);}});
  const close=()=>{adhanStop();loveOpen=false;d.remove();};
  $('#pgo',d).onclick=()=>{S.pa=S.pa||{};S.pa[today()+':'+item.k]=1;save();close();};
  $('#psn',d).onclick=()=>{S.ps=S.ps||{};S.ps[today()+':'+item.k]=Date.now()+600000;save();close();};
@@ -56,19 +56,22 @@ function viewPrayer(){const nx=pnext(),t=ptoday(0),c=pcfg();
   <div class="mini" style="margin-top:8px">Ou choisis ta ville :</div><select id="cty" class="srch" style="max-width:320px">${Object.keys(PCITIES).map(n=>`<option ${n===c.name?'selected':''}>${n}</option>`).join('')}${PCITIES[c.name]?'':`<option selected>${esc(c.name)}</option>`}</select>
   <div class="mini" style="margin-top:8px">Méthode de calcul :</div><select id="mth" class="srch" style="max-width:420px">${Object.entries(PMETH).map(([k,v])=>`<option value="${k}" ${k===(c.m||'uoif')?'selected':''}>${v.n}</option>`).join('')}</select>
   <div style="margin-top:10px"><button class="btn ${S.pp===0?'alt':''}" id="ppt">${S.pp===0?'🔕 Rappels désactivés':'🔔 Rappels pendant les révisions : activés'}</button> <button class="btn alt" id="pnt">📲 Notifications du navigateur</button></div>
-  <div style="margin-top:12px"><b>🔊 Adhan</b> <span class="mini">· ${ADH?'fichier chargé ✅ ('+Math.round(ADH.size/1024)+' Ko)':'aucun fichier'}</span><div class="mini">Choisis un fichier audio (mp3, m4a…) de l'adhan que tu aimes : il se jouera à l'heure de la prière quand l'appli est ouverte.</div>
-   <div><button class="btn alt" id="adf">📂 Choisir mon adhan</button><input type="file" id="adi" accept="audio/*" hidden> ${ADH?'<button class="btn alt" id="adt">▶️ Tester</button> <button class="btn alt" id="ads">⏹️ Stop</button> <button class="btn alt" id="add">🗑️ Retirer</button>':''}</div>
-   ${ADH?`<div class="mini" style="margin-top:6px">Volume : <input type="range" id="adv" min="10" max="100" value="${S.av||80}"> · <button class="btn ${S.ad===0?'alt':''}" id="adon" style="padding:3px 10px">${S.ad===0?'🔇 Son désactivé':'🔔 Son activé'}</button></div>`:''}</div>
+  <div style="margin-top:12px"><b>🔊 Adhan</b><div class="mini">Choisis l'adhan qui se jouera à l'heure de la prière (quand l'appli est ouverte). Pour le Fajr, la version avec « Aş-şalât khayrun mina n-nawm » est utilisée.</div>
+   ${ADL.map(a=>`<div class="adr"><span class="nm" data-nt>${a[1]}</span><button class="btn alt adp" data-k="${a[0]}">▶️</button><button class="btn ${S.ak===a[0]&&S.ad!==0?'':'alt'} adc" data-k="${a[0]}">${S.ak===a[0]&&S.ad!==0?'✅ Choisi':'Choisir'}</button></div>`).join('')}
+   <div class="adr"><span class="nm">🔕 Aucun (silencieux)</span><button class="btn ${S.ad===0?'':'alt'}" id="adno">${S.ad===0?'✅ Choisi':'Choisir'}</button></div>
+   <div class="adr"><span class="nm">📂 Mon propre fichier ${S.ak==='custom'&&ADH?'<span class="mini">· chargé ✅</span>':''}</span><button class="btn alt" id="adf">Choisir</button><input type="file" id="adi" accept="audio/*" hidden>${ADH&&S.ak==='custom'?'<button class="btn alt" id="adt">▶️</button>':''}</div>
+   <div class="mini" style="margin-top:6px"><button class="btn alt" id="ads">⏹️ Stop</button> ${ADH&&S.ad!==0?`· Volume : <input type="range" id="adv" min="10" max="100" value="${S.av||80}">`:''}</div></div>
   <p class="mini">Les horaires sont calculés directement dans l'appli (sans connexion) selon ta position. Ils peuvent différer de quelques minutes de ta mosquée : en cas de doute, suis le calendrier de ta mosquée. Les rappels s'affichent quand l'appli est ouverte.</p></div>`);
- adhanLoad().then(()=>{if($('#adf')&&!!ADH!==!!$('#adt'))viewPrayer();});
+ adhanLoad().then(()=>{if($('#adf')&&!window._adl){window._adl=1;viewPrayer();}});
  $('#adf').onclick=()=>$('#adi').click();
- $('#adi').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>15*1024*1024){toast('Fichier trop lourd (max 15 Mo)');return;}if(f.type&&!/^audio\//.test(f.type)){toast('Choisis un fichier audio');return;}const ok=await IDB.setK('adhan',f);if(ok){ADH=f;toast('Adhan enregistré ✅');viewPrayer();}else toast('Enregistrement impossible sur ce navigateur');};
+ $('#adi').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>15*1024*1024){toast('Fichier trop lourd (max 15 Mo)');return;}if(f.type&&!/^audio\//.test(f.type)){toast('Choisis un fichier audio');return;}const ok=await IDB.setK('adhan',f);if(ok){await IDB.delK('adhanf');ADHF=null;ADH=f;S.ak='custom';S.ad=1;save();toast('Adhan enregistré ✅');viewPrayer();}else toast('Enregistrement impossible sur ce navigateur');};
  const t1=$('#adt');if(t1)t1.onclick=async()=>{const ok=await adhanPlay(true);if(!ok)toast('Lecture impossible : touche d\'abord l\'écran puis réessaie');};
  const t2=$('#ads');if(t2)t2.onclick=adhanStop;
- const t3=$('#add');if(t3)t3.onclick=async()=>{adhanStop();await IDB.delK('adhan');ADH=null;toast('Adhan retiré');viewPrayer();};
+ document.querySelectorAll('.adp').forEach(b=>b.onclick=()=>{adhanStop();try{ADHA=new Audio('adhan/'+b.dataset.k+'.mp3');ADHA.volume=Math.min(1,Math.max(.1,(S.av||80)/100));ADHA.play().catch(()=>toast('Lecture impossible : vérifie ta connexion'));}catch(e){}});
+ document.querySelectorAll('.adc').forEach(b=>b.onclick=async()=>{const k=b.dataset.k;b.disabled=true;adhanStop();try{const r=await fetch('adhan/'+k+'.mp3'),r2=await fetch('adhan/fajr.mp3');if(!r.ok||!r2.ok)throw 0;const a=await r.blob(),f=await r2.blob();await IDB.setK('adhan',a);await IDB.setK('adhanf',f);ADH=a;ADHF=f;S.ak=k;S.ad=1;save();toast('Adhan enregistré ✅');viewPrayer();}catch(e){b.disabled=false;toast('Connexion nécessaire pour télécharger l\'adhan');}});
+ const t3=$('#adno');if(t3)t3.onclick=()=>{adhanStop();S.ad=0;save();viewPrayer();};
  const t4=$('#adv');if(t4)t4.oninput=()=>{S.av=+t4.value;save();if(ADHA)ADHA.volume=S.av/100;};
- const t5=$('#adon');if(t5)t5.onclick=()=>{S.ad=S.ad===0?1:0;save();viewPrayer();};
- document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{setPrayed(b.dataset.p,!prayedToday(b.dataset.p));viewPrayer();});
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{setPrayed(b.dataset.p,!prayedToday(b.dataset.p));viewPrayer();});
  $('#cty').onchange=e=>{const n=e.target.value;const [lat,lon]=PCITIES[n]||[c.lat,c.lon];S.pl={lat,lon,name:n,m:c.m||'uoif'};save();viewPrayer();};
  $('#mth').onchange=e=>{S.pl={...c,m:e.target.value};save();viewPrayer();};
  $('#ppt').onclick=()=>{S.pp=S.pp===0?1:0;save();viewPrayer();};

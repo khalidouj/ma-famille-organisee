@@ -30,9 +30,9 @@ IDB.getK=async function(k){const d=IDB.db||await IDB.open();if(!d)return null;re
 IDB.setK=async function(k,v){const d=IDB.db||await IDB.open();if(!d)return false;return new Promise(res=>{try{const tx=d.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);}catch(e){res(false);}});};
 IDB.delK=async function(k){const d=IDB.db||await IDB.open();if(!d)return;try{d.transaction('kv','readwrite').objectStore('kv').delete(k);}catch(e){}};
 let ADH=null,ADHA=null;
-async function adhanLoad(){try{ADH=await IDB.getK('adhan');}catch(e){ADH=null;}}
+const ADL=[['makkah','🕋 Makkah (La Mecque)'],['mishary','🎙️ Mishary Alafasy'],['refaat','🕌 Mohammad Refaat (Égypte)']];var ADHF=null;async function adhanLoad(){try{ADH=await IDB.getK('adhan');}catch(e){ADH=null;}try{ADHF=await IDB.getK('adhanf');}catch(e){ADHF=null;}if(ADH&&!S.ak)S.ak='custom';}
 function adhanStop(){try{if(ADHA){ADHA.pause();ADHA.currentTime=0;}}catch(e){}ADHA=null;}
-async function adhanPlay(test){if(!test&&S.ad===0)return false;if(!ADH)await adhanLoad();if(!ADH)return false;adhanStop();try{const u=URL.createObjectURL(ADH);ADHA=new Audio(u);ADHA.volume=Math.min(1,Math.max(.1,(S.av||80)/100));ADHA.onended=()=>{try{URL.revokeObjectURL(u);}catch(e){}ADHA=null;};await ADHA.play();return true;}catch(e){ADHA=null;return false;}}
+async function adhanPlay(test,pk){if(!test&&S.ad===0)return false;if(!ADH)await adhanLoad();if(!ADH)return false;adhanStop();try{const u=URL.createObjectURL(pk==='fajr'&&ADHF&&S.ak&&S.ak!=='custom'?ADHF:ADH);ADHA=new Audio(u);ADHA.volume=Math.min(1,Math.max(.1,(S.av||80)/100));ADHA.onended=()=>{try{URL.revokeObjectURL(u);}catch(e){}ADHA=null;};await ADHA.play();return true;}catch(e){ADHA=null;return false;}}
 async function load(){let a=null,b=null;try{a=JSON.parse(localStorage.getItem('gp-v1')||'null');}catch(e){}try{b=await IDB.get();}catch(e){}
  const pick=(a&&b)?((b.ut||0)>(a.ut||0)?b:a):(a||b);if(pick)S={...S,...pick};applyPrefs();}
 let st;function flush(){let ch=false;try{ch=typeof stampAll==='function'&&stampAll();}catch(e){}S.ut=Date.now();const j=JSON.stringify(S);try{localStorage.setItem('gp-v1',j);}catch(e){}try{IDB.set(JSON.parse(j));}catch(e){}if(ch&&typeof syncSoon==='function')syncSoon();}
@@ -90,7 +90,7 @@ function dailySet(n=15){const all=allQuestions();const due=shuffle(all.filter(x=
 /* ---------- router ---------- */
 function go(h){location.hash=h;}
 window.addEventListener('hashchange',route);
-function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,c]=h.split('/');if(S.stl==='o'&&['e','exam','review','science','search','code','penal','today','weak','etudes'].includes(a)){location.hash='';return;}document.body.classList.toggle('study',['e','exam','review','science','search','code','penal','spirit','today','weak','etudes'].includes(a));renderTabs(a||'');
+function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,c]=h.split('/');const _g=!SY.at;document.body.classList.toggle('gate',_g);if(_g)return viewGate();if(S.stl==='o'&&['e','exam','review','science','search','code','penal','today','weak','etudes'].includes(a)){location.hash='';return;}document.body.classList.toggle('study',['e','exam','review','science','search','code','penal','spirit','today','weak','etudes'].includes(a));renderTabs(a||'');
  if(a==='e')return viewEtape(+b,c||'palais');
  if(a==='exam')return viewExam();
  if(a==='review')return viewReview();
@@ -99,6 +99,7 @@ function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,
  if(a==='code')return viewCode('civil');
  if(a==='penal')return viewCode('penal');
  if(a==='spirit')return viewSpirit();
+ if(a==='admin')return viewAdmin();
  if(a==='today')return viewToday();
  if(a==='cal')return viewCal();
  if(a==='tasks')return viewTasks();

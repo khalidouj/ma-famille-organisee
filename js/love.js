@@ -59,7 +59,7 @@ function nostLove(){const r=relPick(['ease','thanks','love','prayer','reg']);if(
  d.innerHTML=`<div class="lv-card"><div class="lv-ico">🌙</div><p class="lv-msg" data-nt>${ar?'تذكرة اليوم':'Un rappel pour aujourd\'hui'}</p>${relHtml(r,false)}<button class="btn" id="lvok" data-nt>${ar?'شكراً':'Merci'}</button></div>`;
  const close=()=>{loveOpen=false;d.remove();};d.onclick=e=>{if(e.target===d)close();};document.body.appendChild(d);d.querySelector('#lvok').onclick=close;}
 let loveOpen=false;
-function love(kind,arg){if(loveOpen||!document.body||document.querySelector('.fm'))return;if(S.nost){if(kind!=='open')return;const dk=new Date().toDateString();if(S.nvd===dk)return;S.nvd=dk;save();return nostLove();}const now=Date.now();
+function love(kind,arg){if(!SY.at||loveOpen||!document.body||document.querySelector('.fm'))return;if(S.nost){if(kind!=='open')return;const dk=new Date().toDateString();if(S.nvd===dk)return;S.nvd=dk;save();return nostLove();}const now=Date.now();
  if(kind==='mid'&&now-(S.lt||0)<240000)return;if(kind==='goal'&&now-(S.lt||0)<60000)return;if(kind==='open'&&now-(S.lo||0)<1800000)return;
  let msg,tags,ico='💌';const h=new Date().getHours();
  if(kind==='open'){const night=h>=21||h<5;const evening=h>=18;const o=LOVE.open;msg=night||evening?o.a[night?1:0]:o.m[loveBag('om',o.m.length)];S.lo=now;tags=['ease','know','love','thanks'];if((S.streak||0)>=3&&Math.random()<.6){msg=`🔥 ${S.streak} jours d'affilée ! Ta régularité est magnifique, je suis si fier de toi.`;tags=['reg'];}ico=night?'🌙':'☀️';}

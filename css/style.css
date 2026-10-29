@@ -179,10 +179,16 @@ canvas#conf{position:fixed;inset:0;pointer-events:none;z-index:99}
 .toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:#1f2a44;color:#fff;padding:10px 18px;border-radius:14px;z-index:100;animation:pop .3s both}
 .srch{width:100%;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1rem}
 mark{background:#ffe38a;color:#000;border-radius:4px}
-@media(max-width:600px){.logo span{display:none}.top{gap:8px;padding:8px 12px}h1{font-size:1.5rem}.hero h1{font-size:1.5rem}.top{flex-wrap:wrap}}
+@media(max-width:600px){.logo span{display:none}.top{gap:4px;padding:8px 8px}.ib{padding:6px 7px}h1{font-size:1.5rem}.hero h1{font-size:1.5rem}.top{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 button.ib.dim{opacity:.55}
 .nost #pLvl,.nost #pStreak,.nost [onclick="go('etudes')"]{display:none!important}
 [dir=rtl] body{text-align:right}[dir=rtl] [style*="text-align:left"]{text-align:right!important}
 [dir=rtl] #cp,[dir=rtl] #cn{transform:scaleX(-1)}
 [dir=rtl] .toast{direction:rtl}
+.ib{position:relative}.nfb{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#e53935;color:#fff;font:700 .7rem/18px system-ui;text-align:center;display:none}
+[dir=rtl] .nfb{right:auto;left:-5px}
+.gate #tabbar,.gate .ib:not(#pLang),.gate .pill{display:none!important}
+.nfi{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;border:1px solid var(--line);margin:6px 0;cursor:pointer;text-align:start}
+.nfi.nfu{background:rgba(244,180,0,.16);border-color:#f4b400}.nfi b{display:block}
+.adr{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0;padding:8px;border:1px solid var(--line);border-radius:12px}.adr .nm{flex:1;min-width:100px}
