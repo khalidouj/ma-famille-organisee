@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Les grands procès</title>
+<title>Ma famille</title>
 <meta name="theme-color" content="#1f2a44">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -15,13 +15,14 @@
 <body>
 
 <div class="top">
- <div class="logo" onclick="go('')">⚖️ <span>Les grands procès</span></div>
+ <div class="logo" onclick="go('')">🏡 <span>Ma famille</span></div>
  <div class="sp"></div>
  <div class="pill" id="pLvl"></div>
  <div class="pill" id="pStreak"></div>
+ <button class="ib" id="pLang" onclick="setLang(isAr()?'fr':'ar')" data-nt>ع</button>
  <button class="ib" id="pSync" onclick="go('sync')" title="Synchronisation">☁️</button>
  <button class="ib" id="pPray" onclick="go('prayer')" title="Horaires de prière">🕌</button>
- <button class="ib" onclick="go('spirit')" title="Versets & hadiths">🌙 <span class="ibt">Versets & hadiths</span></button>
+ <button class="ib" id="pSpirit" onclick="go('spirit')" title="Versets & hadiths">🌙 <span class="ibt">Versets & hadiths</span></button>
  <button class="ib" onclick="openPrefs()" title="Affichage : thème, taille du texte">Aa</button>
 </div>
 <main id="app"></main>

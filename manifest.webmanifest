@@ -1,8 +1,8 @@
 {
  "id": "./",
- "name": "Les grands procès — droit pénal",
- "short_name": "Grands procès",
- "description": "Cours de droit pénal : palais mental, flashcards, quiz, codes et horaires de prière.",
+ "name": "Ma famille",
+ "short_name": "Ma famille",
+ "description": "Agenda, tâches et famille partagés, horaires de prière et cours de droit",
  "lang": "fr",
  "start_url": "./",
  "scope": "./",

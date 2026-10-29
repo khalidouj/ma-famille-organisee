@@ -22,7 +22,7 @@ function ccArt(i,back){ccInit();const a=CC.arts[i];if(!a)return;const fav=(S.fav
  $('#fv').onclick=()=>{S.fav=S.fav||[];const fk=favKey(a),k=S.fav.indexOf(fk);if(k<0)S.fav.push(fk);else S.fav.splice(k,1);save();ccArt(i,back);};
  $('#cp').onclick=()=>{const t=`${CODES[CUR].name}, article ${a[0]}\n\n${a[2]}`;try{navigator.clipboard.writeText(t).then(()=>toast('Copié'),()=>toast('Copie impossible'));}catch(e){toast('Copie impossible');}};
  $('#ccv').scrollIntoView({behavior:'smooth',block:'start'});}
-function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),1500);}
+function toast(m,ms){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),ms||1500);}
 function viewCode(w){CUR=w||'civil';ccInit();const C=CODES[CUR];
  setApp(`<div class="banner" style="--c:${C.color}"><h1>${CUR==='civil'?'📚':'⚖️'} ${C.name}</h1><div class="mini" style="color:#fff;opacity:.9">${esc(CC.src||'')} · ${CC.arts.length} articles</div></div>
  <div class="row" style="margin:0 0 8px"><button class="btn ${CUR==='civil'?'':'alt'}" onclick="go('code')">📚 Code civil</button><button class="btn ${CUR==='penal'?'':'alt'}" onclick="go('penal')">⚖️ Code pénal</button></div>

@@ -48,7 +48,7 @@ function relPick(tags){const t=tags[Math.floor(Math.random()*tags.length)];const
 function relHtml(r,open){const q=r.k==='q';return `<blockquote class="lv-q"><div class="lv-ref">${q?'📖 Coran':'🌙 Hadith'} · ${esc(r.ref)}</div><div class="lv-nm">${esc(r.nm)}</div>${q?'':'<div class="lv-nm">Le Prophète (paix et salut sur lui) a dit :</div>'}<div class="lv-tx">« ${esc(r.x)} »</div><div class="lv-tr">Traduction du sens en français</div></blockquote>
  <details class="lv-d"${open?' open':''}><summary>💡 À quoi ça sert ? · Explication</summary><p><b>Pourquoi ce message ?</b> ${esc(r.why)}</p><p><b>Explication :</b> ${esc(r.ex)}</p></details>`;}
 let loveOpen=false;
-function love(kind,arg){if(loveOpen||!document.body||document.querySelector('.fm'))return;const now=Date.now();
+function love(kind,arg){if(S.nost)return;if(loveOpen||!document.body||document.querySelector('.fm'))return;const now=Date.now();
  if(kind==='mid'&&now-(S.lt||0)<240000)return;if(kind==='goal'&&now-(S.lt||0)<60000)return;if(kind==='open'&&now-(S.lo||0)<1800000)return;
  let msg,tags,ico='💌';const h=new Date().getHours();
  if(kind==='open'){const night=h>=21||h<5;const evening=h>=18;const o=LOVE.open;msg=night||evening?o.a[night?1:0]:o.m[loveBag('om',o.m.length)];S.lo=now;tags=['ease','know','love','thanks'];if((S.streak||0)>=3&&Math.random()<.6){msg=`🔥 ${S.streak} jours d'affilée ! Ta régularité est magnifique, je suis si fier de toi.`;tags=['reg'];}ico=night?'🌙':'☀️';}

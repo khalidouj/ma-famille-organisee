@@ -87,7 +87,7 @@ button.pchip{cursor:pointer;opacity:.55}button.pchip.on{opacity:1;font-weight:70
 .sw{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;margin:2px}.sw.on{border-color:var(--ink)}
 .fcard{text-align:left;max-height:92vh;overflow-y:auto}
 .fl{display:block;margin:8px 0;font-size:.85rem;color:var(--muted);font-weight:600}.fl .srch{margin-top:3px;font-weight:400}
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fgrid>*{min-width:0}.fgrid .srch{width:100%;box-sizing:border-box}
 .frow{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
 .frow2{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:6px 0;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer}
 .frow2 .ico{font-size:1.3rem}.frow2 .fb2{flex:1;min-width:0}
@@ -180,3 +180,7 @@ mark{background:#ffe38a;color:#000;border-radius:4px}
 @media(max-width:600px){.logo span{display:none}.top{gap:8px;padding:8px 12px}h1{font-size:1.5rem}.hero h1{font-size:1.5rem}.top{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 button.ib.dim{opacity:.55}
+.nost #pLvl,.nost #pStreak,.nost #pSpirit,.nost [onclick="go('etudes')"]{display:none!important}
+[dir=rtl] body{text-align:right}[dir=rtl] [style*="text-align:left"]{text-align:right!important}
+[dir=rtl] #cp,[dir=rtl] #cn{transform:scaleX(-1)}
+[dir=rtl] .toast{direction:rtl}

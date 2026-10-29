@@ -31,9 +31,9 @@ function prayerCard(){const nx=pnext();const t=ptoday(0);const pr=PNAMES.filter(
 function pwindowEnd(k,t){return {fajr:t.sunrise,dhuhr:t.asr,asr:t.maghrib,maghrib:t.isha,isha:new Date(t.isha.getTime()+3*3600e3)}[k];}
 const PMSG=["Mon amour, c'est l'heure de {n} 🕌 Pose tout et va prier : tes révisions t'attendront, et Allah facilitera ce que tu as appris. Je t'aime 💖","Ma chérie, {n} vient d'entrer 🤲 Une petite pause avec Allah, ça fait du bien au cœur et à la tête. Je suis fier de toi.","Coucou mon cœur 💕 C'est l'heure de {n}. Va te ressourcer, je t'attends ! Les articles ne vont pas s'enfuir 😄","C'est l'heure de {n} 🕌 Prier à l'heure, c'est ta force. Tout va bien se passer, in châ' Allah. Je pense à toi 🤍"];
 function prayerPopup(item,t){if(loveOpen||$('#pfo')||document.querySelector('.fm'))return false;loveOpen=true;
- const msg=PMSG[Math.floor(Math.random()*PMSG.length)].replace('{n}',item.n);const r=relPick(['prayer']);
+ const msg=S.nost?'Il est l\'heure de prier 🤲':PMSG[Math.floor(Math.random()*PMSG.length)].replace('{n}',item.n);const r=S.nost?null:relPick(['prayer']);
  const d=document.createElement('div');d.className='lv-ov';
- d.innerHTML=`<div class="lv-card"><div class="lv-ico">🕌</div><h3 style="margin:.2em 0">C'est l'heure de ${item.n} · ${hhmm(t[item.k])}</h3><p class="lv-msg">${esc(msg)}</p>${relHtml(r,false)}<div class="lv-sig">— Khalid ❤️</div><button class="btn" id="pgo">🤲 J'y vais</button> <button class="btn alt" id="psn">⏰ Dans 10 min</button></div>`;
+ d.innerHTML=`<div class="lv-card"><div class="lv-ico">🕌</div><h3 style="margin:.2em 0">C'est l'heure de ${item.n} · ${hhmm(t[item.k])}</h3><p class="lv-msg">${esc(msg)}</p>${r?relHtml(r,false):''}${S.nost?'':'<div class="lv-sig">— Khalid ❤️</div>'}<button class="btn" id="pgo">🤲 J'y vais</button> <button class="btn alt" id="psn">⏰ Dans 10 min</button></div>`;
  document.body.appendChild(d);try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}adhanPlay(false).then(ok=>{if(ok){const b=document.createElement('button');b.className='btn alt';b.textContent='🔇 Arrêter le son';b.onclick=()=>{adhanStop();b.remove();};const host=$('#psn',d);host&&host.after(' ',b);}});
  const close=()=>{adhanStop();loveOpen=false;d.remove();};
  $('#pgo',d).onclick=()=>{S.pa=S.pa||{};S.pa[today()+':'+item.k]=1;save();close();};
@@ -43,12 +43,12 @@ function prayerPopup(item,t){if(loveOpen||$('#pfo')||document.querySelector('.fm
 function prayerTick(){try{if(S.pp===0)return;const now=new Date(),t=ptoday(0);
  for(const p of PNAMES){const [k,n,e]=p,at=t[k],end=pwindowEnd(k,t);if(now<at||now>=end)continue;
   const key=today()+':'+k;if((S.pa&&S.pa[key])||prayedToday(k))continue;if(S.ps&&S.ps[key]&&Date.now()<S.ps[key])continue;
-  if(prayerPopup({k,n,e},t)){if(S.pn&&window.Notification&&Notification.permission==='granted'&&document.hidden){try{new Notification('🕌 C\'est l\'heure de '+n,{body:'Va prier, tes révisions t\'attendent ❤️'});}catch(_){}}}
+  if(prayerPopup({k,n,e},t)){if(S.pn&&window.Notification&&Notification.permission==='granted'&&document.hidden){try{new Notification(trS('🕌 C\'est l\'heure de '+n),{body:S.nost?trS('Il est l\'heure de prier 🤲'):'Va prier, tes révisions t\'attendent ❤️'});}catch(_){}}}
   break;}
  const pill=$('#pPray');if(pill){const nx=pnext();pill.innerHTML=`🕌 <span class="ibt">${nx.n} ${hhmm(nx.at)}</span>`;pill.title=`Prochaine prière : ${nx.n} à ${hhmm(nx.at)} (dans ${pin(nx.at-now)})`;}}catch(e){}}
 setInterval(prayerTick,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)prayerTick();});
 function viewPrayer(){const nx=pnext(),t=ptoday(0),c=pcfg();
- setApp(`<div class="banner" style="--c:#00695c"><h1>🕌 Horaires de prière</h1><div class="mini" style="color:#fff;opacity:.9">📍 ${esc(c.name)} · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div></div>
+ setApp(`<div class="banner" style="--c:#00695c"><h1>🕌 Horaires de prière</h1><div class="mini" style="color:#fff;opacity:.9">📍 ${esc(c.name)} · ${new Date().toLocaleDateString(isAr()?'ar-MA-u-nu-latn':'fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div></div>
  <div class="plan"><div style="font-size:1.3rem"><b>${nx.e} ${nx.n}</b> à <b>${hhmm(nx.at)}</b> <span class="mini">· dans ${pin(nx.at-new Date())}</span></div></div>
  <div class="plan"><h3>Aujourd'hui</h3>${PNAMES.map(([k,n,e])=>`<div class="task" data-k="${k}" style="cursor:default"><span style="font-size:1.4rem">${e}</span><div><b>${n}</b></div><span class="sp"></span><b>${hhmm(t[k])}</b><button class="btn ${prayedToday(k)?'':'alt'}" data-p="${k}" style="padding:4px 10px">${prayedToday(k)?'✅ Priée':'Marquer'}</button></div>`).join('')}<div class="mini">🌅 Lever du soleil : ${hhmm(t.sunrise)} (fin de Fajr)</div></div>
  <div class="plan"><h3>⚙️ Réglages</h3>
