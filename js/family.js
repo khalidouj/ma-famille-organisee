@@ -314,7 +314,7 @@ function famCardBind(){const cp=$('#fcCp');if(cp){cp.onclick=()=>{try{navigator.
  go1.onclick=join;$('#fjCd').onkeydown=e=>{if(e.key==='Enter')join();};
  $('#fcGo').onclick=async()=>{$('#fcGo').disabled=true;try{const r=await sbData('/rest/v1/rpc/create_family',{m:'POST',b:{n:$('#fcNm').value}});SY.fid=r.id;SY.code=r.code;SY.fname=r.name;sySave();toast('Famille créée ✅');await syncNow();viewFam();}catch(x){$('#fcGo').disabled=false;err(frErr(x.message));}};}
 /* notifications */
-function devNotify(t,o){o=Object.assign({icon:'icons/icon-192.png',badge:'icons/icon-192.png'},o||{});try{if(navigator.serviceWorker&&navigator.serviceWorker.ready){navigator.serviceWorker.ready.then(r=>r.showNotification(t,o)).catch(()=>{try{new Notification(t,o);}catch(_){}});return;}}catch(_){}try{new Notification(t,o);}catch(_){}}
+function devNotify(t,o){o=Object.assign({icon:'icons/icon-192.png',badge:'icons/badge-96.png'},o||{});try{if(navigator.serviceWorker&&navigator.serviceWorker.ready){navigator.serviceWorker.ready.then(r=>r.showNotification(t,o)).catch(()=>{try{new Notification(t,o);}catch(_){}});return;}}catch(_){}try{new Notification(t,o);}catch(_){}}
 
 function nfList(){S.nf=S.nf||[];return S.nf;}
 function nfBadge(){const n=nfList().filter(x=>!x.r).length;const b=$('#nfB');if(b){b.textContent=n>9?'9+':n;b.style.display=n?'block':'none';}}
