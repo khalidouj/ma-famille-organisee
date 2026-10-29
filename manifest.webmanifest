@@ -1,0 +1,31 @@
+{
+ "id": "./",
+ "name": "Les grands procès — droit pénal",
+ "short_name": "Grands procès",
+ "description": "Cours de droit pénal : palais mental, flashcards, quiz, codes et horaires de prière.",
+ "lang": "fr",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#f6f4ef",
+ "theme_color": "#1f2a44",
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

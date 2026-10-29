@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Les grands procès</title>
+<meta name="theme-color" content="#1f2a44">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="top">
+ <div class="logo" onclick="go('')">⚖️ <span>Les grands procès</span></div>
+ <div class="sp"></div>
+ <div class="pill" id="pLvl"></div>
+ <div class="pill" id="pStreak"></div>
+ <button class="ib" id="pPray" onclick="go('prayer')" title="Horaires de prière">🕌</button>
+ <button class="ib" onclick="go('spirit')" title="Versets & hadiths">🌙 <span class="ibt">Versets & hadiths</span></button>
+ <button class="ib" onclick="openPrefs()" title="Affichage : thème, taille du texte">Aa</button>
+</div>
+<main id="app"></main>
+<nav class="tabbar" id="tabbar"></nav>
+<canvas id="conf"></canvas>
+
+<script src="js/data-course.js"></script>
+<script src="js/data-civil.js"></script>
+<script src="js/data-penal.js"></script>
+<script src="js/core.js"></script>
+<script src="js/views.js"></script>
+<script src="js/planning.js"></script>
+<script src="js/prayer.js"></script>
+<script src="js/family.js"></script>
+<script src="js/codes.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/love.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>

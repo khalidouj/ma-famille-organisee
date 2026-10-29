@@ -1,0 +1,11 @@
+LES GRANDS PROCÈS - appli web installable (PWA)
+
+MISE EN LIGNE (gratuit) - au choix :
+A) Netlify Drop : va sur app.netlify.com/drop, glisse le DOSSIER 'dist' (tout son contenu). Tu obtiens une adresse https://xxxx.netlify.app
+B) GitHub Pages : crée un dépôt, mets-y le CONTENU du dossier dist à la racine, Settings > Pages > Deploy from branch.
+
+INSTALLER SUR ANDROID : ouvre l'adresse dans Chrome > menu (3 points) > 'Installer l'application' (ou le bouton 'Installer l'appli' sur l'accueil).
+
+MISE À JOUR : remplace les fichiers en ligne par la nouvelle version ; l'appli propose 'Nouvelle version disponible'.
+
+IMPORTANT : la progression est liée à l'adresse. Avant de passer du fichier HTML à l'adresse en ligne : page 'Ma sauvegarde' > Télécharger, puis sur la nouvelle appli > Restaurer.
