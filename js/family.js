@@ -260,7 +260,7 @@ function syRerender(){if(document.querySelector('.lv-ov'))return;const a=documen
 const syStatTxt=()=>{const ar=isAr(),dt=SY.last?new Date(SY.last).toLocaleString(ar?'ar-MA-u-nu-latn':'fr-FR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):(ar?'لم تتم بعد':'pas encore');
  const st=ar?{ok:'✅ محدّث',sync:'🔄 جارٍ المزامنة…',off:'📴 بدون اتصال',err:'⚠️ '+trS(SY.err),idle:'…',out:''}:{ok:'✅ À jour',sync:'🔄 Synchronisation…',off:'📴 Hors connexion',err:'⚠️ '+SY.err,idle:'…',out:''};
  return (st[SY.st]||'')+(ar?' · آخر مزامنة : ':' · dernière synchro : ')+dt;};
-function syUI(){const b=$('#pSync');if(b){const m={out:['☁️','Synchronisation : non connecté'],idle:['☁️','Synchronisation'],sync:['🔄','Synchronisation en cours…'],ok:['✅','Synchronisé'],off:['📴','Hors connexion : se synchronisera plus tard'],err:['⚠️','Problème de synchronisation']}[SY.st]||['☁️',''];b.textContent=SY.st==='ok'||SY.st==='idle'?'👤':'👤'+m[0];b.title='Mon compte · '+m[1];b.classList.toggle('dim',SY.st==='out');}
+function syUI(){try{admVis();}catch(e){}const b=$('#pSync');if(b){const m={out:['☁️','Synchronisation : non connecté'],idle:['☁️','Synchronisation'],sync:['🔄','Synchronisation en cours…'],ok:['✅','Synchronisé'],off:['📴','Hors connexion : se synchronisera plus tard'],err:['⚠️','Problème de synchronisation']}[SY.st]||['☁️',''];b.textContent=SY.st==='ok'||SY.st==='idle'?'👤':'👤'+m[0];b.title='Mon compte · '+m[1];b.classList.toggle('dim',SY.st==='out');}
  const t=$('#syStat');if(t)t.textContent=syStatTxt();}
 window.addEventListener('online',()=>syncNow());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow();});
@@ -338,11 +338,16 @@ function instCard(){if(S.inst||matchMedia('(display-mode: standalone)').matches|
 function instBind(){const g=$('#instGo');if(!g)return;g.onclick=()=>{if(DEFER)doInstall();else toast(/iphone|ipad/i.test(navigator.userAgent)?'Touche Partager puis « Sur l’écran d’accueil »':'Menu ⋮ du navigateur, puis « Installer l’application »',6000);};$('#instLt').onclick=()=>{S.inst=1;save();$('#instC').remove();};}
 /* ---------- ADMIN ---------- */
 const admRpc=(fn,b)=>sbData('/rest/v1/rpc/'+fn,{m:'POST',b:b||{}});
-async function admCheck(){if(!SY.at||SY.adm!==undefined)return;SY.adm=false;try{SY.adm=(await admRpc('is_admin'))===true;}catch(e){SY.adm=false;}const b=$('#pAdm');if(b)b.style.display=SY.adm?'':'none';}
+const OWNER='mrkhalidou120@gmail.com';
+function admVis(){const b=$('#pAdm');if(b)b.style.display=(SY.at&&(SY.adm||SY.email===OWNER))?'':'none';}
+async function admCheck(){if(!SY.at||SY.adm!==undefined)return;SY.adm=false;SY.admE='';try{SY.adm=(await admRpc('is_admin'))===true;if(!SY.adm)SY.admE='no';}catch(e){SY.adm=false;SY.admE=e.net?'net':'nofn';}admVis();}
 const admD=i=>i?new Date(i).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
 let ADMD=null;
 function admOv(html){const d=document.createElement('div');d.className='lv-ov';d.setAttribute('data-nt','');d.innerHTML=`<div class="lv-card pf" style="text-align:left;max-width:640px;width:94vw;max-height:88vh;overflow:auto">${html}<div style="margin-top:12px;text-align:right"><button class="btn" id="admX">Fermer</button></div></div>`;document.body.appendChild(d);const c=()=>d.remove();d.onclick=e=>{if(e.target===d)c();};$('#admX',d).onclick=c;d.close=c;return d;}
-async function viewAdmin(){if(SY.adm===false){go('');return;}
+async function viewAdmin(){if(!SY.at){go('');return;}
+ if(!SY.adm){setApp(`<div data-nt><div class="banner" style="--c:#37474f"><h1>🛠️ Admin</h1></div><div class="mini">Vérification…</div></div>`);SY.adm=undefined;await admCheck();
+  if(!SY.adm){const m={net:'Pas de connexion : réessaie quand tu es en ligne.',nofn:'Le script SQL admin n\'a pas encore été exécuté dans Supabase (SQL Editor → coller supabase_admin.sql → Run).',no:'Le serveur ne te reconnaît pas comme admin. Exécute (ou relance) le script supabase_admin.sql dans Supabase : il te déclare admin d\'après ton e-mail ('+esc(SY.email||'')+'). Ce compte doit exister dans Authentication → Users.'}[SY.admE]||'Accès refusé.';
+   setApp(`<div data-nt><div class="banner" style="--c:#37474f"><h1>🛠️ Admin</h1></div><div class="card">⚠️ ${m}</div><div class="row"><button class="btn" onclick="SY.adm=undefined;viewAdmin()">🔄 Réessayer</button></div></div>`);return;}}
  setApp(`<div data-nt><div class="banner" style="--c:#37474f"><h1>🛠️ Admin</h1><div class="mini" style="color:#fff;opacity:.9">Vue complète : comptes, familles et données</div></div><div id="admB"><div class="mini">Chargement…</div></div></div>`);
  try{ADMD=await admRpc('admin_overview');}catch(x){const e=$('#admB');if(e)e.innerHTML=`<div class="card">⚠️ ${esc(frErr(x.message))}<div class="mini">Première fois ? Exécute le script « supabase_admin.sql » dans Supabase (SQL Editor).</div></div>`;return;}
  admDraw();}
@@ -380,7 +385,7 @@ async function admFam(fid){let r;try{r=await admRpc('admin_family',{f:fid});}cat
   o.querySelectorAll('[data-k]').forEach(b=>b.onclick=async()=>{if(!confirm('Supprimer cet élément pour toute la famille ?'))return;const k=b.dataset.k,id=b.dataset.i;dt[k]=(dt[k]||[]).filter(x=>x.id!==id);dt.dl=dt.dl||{};dt.dl[id]=Date.now();await save();draw();});};
  draw();}
 const HJH='bb0c3ca40c41fe006b1e4117548511317ccb665906c1acfea94eeaa51db7a2ca';
-function doLogout(){if(!confirm('Te déconnecter ? Tes données restent sur cet appareil.'))return;const o=$('#acO');if(o)o.remove();SY.at=SY.rt='';SY.fid=SY.code=SY.fname='';SY.adm=undefined;SY.st='out';sySave();syUI();const b=$('#pAdm');if(b)b.style.display='none';route();}
+function doLogout(){if(!confirm('Te déconnecter ? Tes données restent sur cet appareil.'))return;const o=$('#acO');if(o)o.remove();SY.at=SY.rt='';SY.fid=SY.code=SY.fname='';SY.adm=undefined;SY.st='out';sySave();syUI();route();}
 function openAccount(){if($('#acO'))return;const d=document.createElement('div');d.className='lv-ov';d.id='acO';
  const typ=S.stl==='h'?'👩‍🎓 Hajar (études de droit affichées)':S.stl==='o'?'👤 Compte famille':'';
  d.innerHTML=`<div class="lv-card pf" style="text-align:start"><h3 style="margin:0 0 6px">👤 Mon compte</h3>
@@ -388,7 +393,7 @@ function openAccount(){if($('#acO'))return;const d=document.createElement('div')
  ${SY.fid?`<div class="mini" style="margin-top:8px">👪 <b data-nt>${esc(SY.fname||'')}</b> · <span style="font-family:monospace;letter-spacing:.08em;user-select:all" data-nt>${esc(SY.code||'')}</span></div>`:'<div class="mini" style="margin-top:8px">👪 Pas encore de famille : va dans l\'onglet « Famille ».</div>'}
  <div class="mini" style="margin-top:8px" data-nt>${esc(syStatTxt())}</div>
  ${S.stl?'':`<div class="mini" style="margin-top:10px"><b>Type de compte</b> : choisis pour adapter l'appli.</div><div class="row"><button class="btn" id="acH">👩‍🎓 Je suis Hajar</button><button class="btn alt" id="acO2">👤 Autre personne</button></div>`}
- <div class="row" style="margin-top:12px"><button class="btn" id="acSy">🔄 Synchroniser</button>${matchMedia('(display-mode: standalone)').matches?'':'<button class="btn alt" id="acIn">📲 Installer</button>'}${SY.adm?'<button class="btn alt" id="acAd">🛠️ Admin</button>':''}</div>
+ <div class="row" style="margin-top:12px"><button class="btn" id="acSy">🔄 Synchroniser</button>${matchMedia('(display-mode: standalone)').matches?'':'<button class="btn alt" id="acIn">📲 Installer</button>'}${SY.adm||SY.email===OWNER?'<button class="btn alt" id="acAd">🛠️ Admin</button>':''}</div>
  <div class="row" style="margin-top:8px"><button class="btn alt" id="acPw">🔑 Mot de passe</button><button class="btn alt" id="acDt">Détails de la synchro</button><button class="btn alt" id="acOut" style="color:#c62828">🚪 Me déconnecter</button></div>
  <div style="margin-top:12px;text-align:end"><button class="btn" id="acX">Fermer</button></div></div>`;
  document.body.appendChild(d);const c=()=>d.remove();d.onclick=e=>{if(e.target===d)c();};$('#acX',d).onclick=c;
