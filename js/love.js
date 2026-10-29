@@ -52,7 +52,7 @@ function relHtml(r,open){if(!r)return '';const q=r.k==='q',A=isAr()?RELAR[r.i]:n
  if(A&&A.a)return `<blockquote class="lv-q"><div class="lv-ref" data-nt>${q?'📖 القرآن الكريم':'🌙 حديث شريف'} · ${esc(A.rf)}</div><div class="lv-nm" data-nt>${esc(A.nm)}</div>${q?'':'<div class="lv-nm" data-nt>قال رسول الله ﷺ:</div>'}<div class="lv-ar" data-nt>${q?'﴿ ':'« '}${esc(A.a)}${q?' ﴾':' »'}</div></blockquote>
  ${A.w?`<details class="lv-d" data-nt${open?' open':''}><summary>💡 المعنى والشرح</summary><p><b>لماذا هذه الرسالة؟</b> ${esc(A.w)}</p><p><b>الشرح:</b> ${esc(A.e)}</p></details>`:''}`;
  const hide=S.nost&&RSTUDY.test(r.why+' '+r.ex);
- return `<blockquote class="lv-q"><div class="lv-ref">${q?'📖 Coran':'🌙 Hadith'} · ${esc(r.ref)}</div><div class="lv-nm">${esc(r.nm)}</div>${q?'':'<div class="lv-nm">Le Prophète (paix et salut sur lui) a dit :</div>'}<div class="lv-tx">« ${esc(r.x)} »</div><div class="lv-tr">Traduction du sens en français</div></blockquote>
+ return `<blockquote class="lv-q"><div class="lv-ref">${q?'📖 Coran':'🌙 Hadith'} · ${esc(q?r.ref.replace(/^Coran /,''):r.ref)}</div><div class="lv-nm">${esc(r.nm)}</div>${q?'':'<div class="lv-nm">Le Prophète (paix et salut sur lui) a dit :</div>'}<div class="lv-tx">« ${esc(r.x)} »</div><div class="lv-tr">Traduction du sens en français</div></blockquote>
  ${hide?'':`<details class="lv-d"${open?' open':''}><summary>💡 À quoi ça sert ? · Explication</summary><p><b>Pourquoi ce message ?</b> ${esc(r.why)}</p><p><b>Explication :</b> ${esc(r.ex)}</p></details>`}`;}
 function nostLove(){const r=relPick(['ease','thanks','love','prayer','reg']);if(!r)return;loveOpen=true;const ar=isAr();
  const d=document.createElement('div');d.className='lv-ov';
