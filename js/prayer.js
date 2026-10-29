@@ -50,7 +50,7 @@ setInterval(prayerTick,20000);document.addEventListener('visibilitychange',()=>{
 function viewPrayer(){const nx=pnext(),t=ptoday(0),c=pcfg();
  setApp(`<div class="banner" style="--c:#00695c"><h1>🕌 Horaires de prière</h1><div class="mini" style="color:#fff;opacity:.9">📍 ${esc(c.name)} · ${new Date().toLocaleDateString(isAr()?'ar-MA-u-nu-latn':'fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div></div>
  <div class="plan"><div style="font-size:1.3rem"><b>${nx.e} ${nx.n}</b> à <b>${hhmm(nx.at)}</b> <span class="mini">· dans ${pin(nx.at-new Date())}</span></div></div>
- <div class="plan"><h3>Aujourd'hui</h3>${PNAMES.map(([k,n,e])=>`<div class="task" data-k="${k}" style="cursor:default"><span style="font-size:1.4rem">${e}</span><div><b>${n}</b></div><span class="sp"></span><b>${hhmm(t[k])}</b><button class="btn ${prayedToday(k)?'':'alt'}" data-p="${k}" style="padding:4px 10px">${prayedToday(k)?'✅ Priée':'Marquer'}</button></div>`).join('')}<div class="mini">🌅 Lever du soleil : ${hhmm(t.sunrise)} (fin de Fajr)</div></div>
+ <div class="plan"><h3>Aujourd'hui</h3>${PNAMES.map(([k,n,e])=>`<div class="task" data-k="${k}" style="cursor:default"><span style="font-size:1.4rem">${e}</span><div><b>${n}</b></div><span class="sp"></span><b>${hhmm(t[k])}</b><button class="btn ${prayedToday(k)?'':'alt'}" data-p="${k}" style="padding:4px 10px">${prayedToday(k)?'✅ Priée':'Marquer'}</button></div>`).join('')}<div class="mini">🌅 Lever du soleil : ${hhmm(t.sunrise)} (fin de Fajr)</div><div class="mini" style="margin-top:6px">📐 Méthode : ${(PMETH[c.m||'uoif']||PMETH.uoif).n} · ${esc(c.name)}</div>${(c.m||'uoif')==='uoif'?'':'<div style="margin-top:8px"><button class="btn" id="mfr">✅ Passer en méthode France (UOIF 12°/12°)</button></div>'}</div>
  <div class="plan"><h3>⚙️ Réglages</h3>
   <div><button class="btn" id="geo">📍 Utiliser ma position</button> <span class="mini" id="geos"></span></div>
   <div class="mini" style="margin-top:8px">Ou choisis ta ville :</div><select id="cty" class="srch" style="max-width:320px">${Object.keys(PCITIES).map(n=>`<option ${n===c.name?'selected':''}>${n}</option>`).join('')}${PCITIES[c.name]?'':`<option selected>${esc(c.name)}</option>`}</select>
@@ -73,6 +73,7 @@ function viewPrayer(){const nx=pnext(),t=ptoday(0),c=pcfg();
  const t4=$('#adv');if(t4)t4.oninput=()=>{S.av=+t4.value;save();if(ADHA)ADHA.volume=S.av/100;};
   document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{setPrayed(b.dataset.p,!prayedToday(b.dataset.p));viewPrayer();});
  $('#cty').onchange=e=>{const n=e.target.value;const [lat,lon]=PCITIES[n]||[c.lat,c.lon];S.pl={lat,lon,name:n,m:c.m||'uoif'};save();viewPrayer();};
+ const mf=$('#mfr');if(mf)mf.onclick=()=>{S.pl={...c,m:'uoif'};save();viewPrayer();toast('Méthode France activée ✅');};
  $('#mth').onchange=e=>{S.pl={...c,m:e.target.value};save();viewPrayer();};
  $('#ppt').onclick=()=>{S.pp=S.pp===0?1:0;save();viewPrayer();};
  $('#pnt').onclick=()=>{if(!window.Notification){toast('Non disponible sur ce navigateur');return;}Notification.requestPermission().then(p=>{S.pn=p==='granted'?1:0;save();toast(p==='granted'?'Notifications activées ✅':'Notifications refusées');});};
