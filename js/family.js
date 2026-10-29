@@ -322,5 +322,5 @@ function langApply(){const ar=isAr();document.documentElement.lang=ar?'ar':'fr';
  const b=$('#pLang');if(b){b.textContent=ar?'FR':'ع';b.title=ar?'Français':'العربية';}
  if(ar){document.title='عائلتي';if(!trMO){trMO=new MutationObserver(ms=>{if(document.body.classList.contains('study'))return;ms.forEach(m=>{if(m.type==='characterData')trNode(m.target);else m.addedNodes.forEach(trNode);});});trMO.observe(document.body,{childList:true,subtree:true,characterData:true});}trNode(document.body);}
  else{document.title='Ma famille';}}
-function setLang(l){S.lang=l;if(l==='ar'&&S.nost===undefined)S.nost=1;flush();langApply();hud();route();toast(l==='ar'?'تم تغيير اللغة':'Langue : français');}
+function setLang(l){S.lang=l;if(l==='ar'&&S.nost===undefined){S.nost=1;S.nsa=1;}if(l==='fr'&&S.nsa){S.nost=0;S.nsa=0;}flush();langApply();hud();route();toast(l==='ar'?'تم تغيير اللغة':'Langue : français');}
 const _cf=window.confirm.bind(window),_al=window.alert.bind(window);window.confirm=m=>_cf(trS(m));window.alert=m=>_al(trS(m));
