@@ -191,4 +191,5 @@ button.ib.dim{opacity:.55}
 .gate #tabbar,.gate .ib:not(#pLang),.gate .pill{display:none!important}
 .nfi{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;border:1px solid var(--line);margin:6px 0;cursor:pointer;text-align:start}
 .nfi.nfu{background:rgba(244,180,0,.16);border-color:#f4b400}.nfi b{display:block}
+.acg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.acg .btn{width:100%;margin:0;padding:9px 6px;font-size:.88rem;text-align:center}
 .adr{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0;padding:8px;border:1px solid var(--line);border-radius:12px}.adr .nm{flex:1;min-width:100px}
