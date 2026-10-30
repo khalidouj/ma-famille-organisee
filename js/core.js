@@ -106,6 +106,7 @@ function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,
  if(a==='chat')return viewChat(b||'');
  if(a==='log')return viewLog(b||'');
  if(a==='mm')return viewMm(b||'',c||'');
+ if(a==='la')return viewLa(b||'',c||'');
  if(a==='fam')return viewFam();
  if(a==='p')return viewPerson(b);
  if(a==='etudes')return viewHome();

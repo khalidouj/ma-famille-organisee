@@ -83,7 +83,7 @@ function viewDash(){const t=today(),od=overdue(),now=items=>items;const todayIte
  const noDate=tks().filter(x=>!x.dn&&!x.d);const open=tks().filter(x=>!x.dn).length;
  setApp(`<div class="banner" style="--c:#3949ab"><h1>${greet()}</h1><div class="mini" style="color:#fff;opacity:.9">${fdate(t,1)} · ${todayItems.length?todayItems.length+' chose'+(todayItems.length>1?'s':'')+' aujourd\'hui':'rien de prévu aujourd\'hui'}</div></div>
  ${instCard()}<div class="row"><button class="btn" id="aEv">📅 + Rendez-vous</button><button class="btn" id="aTk">✅ + Tâche</button></div>
- ${lgDashCard()}${mmDashCard()}
+ ${lgDashCard()}${mmDashCard()}${laDashCard()}
  ${!fam().length?`<div class="plan"><h3>👪 Commence par ta famille</h3><div class="mini">Ajoute les personnes dont tu gères les rendez-vous, les papiers et les tâches.</div><div class="row"><button class="btn" onclick="quickAddFam()">Ajouter plusieurs personnes d'un coup</button><button class="btn alt" onclick="pForm()">Une seule personne</button></div></div>`:''}
  ${od.length?`<div class="plan" style="border-color:#e53935"><h3>⚠️ En retard (${od.length})</h3>${od.slice(0,6).map(x=>rowHtml({k:'tk',id:x.id,t:x.t,tm:x.tm,w:x.w,date:x.d,it:x},1)).join('')}${od.length>6?`<div class="mini">… et ${od.length-6} autres, dans l'onglet Tâches</div>`:''}</div>`:''}
  <div class="plan"><h3>📌 Aujourd'hui</h3>${todayItems.length?todayItems.map(x=>rowHtml(x)).join(''):'<div class="mini">Rien de prévu. Profites-en ! 🌿</div>'}</div>
@@ -142,7 +142,7 @@ function viewPerson(id){const p=person(id);if(!p)return viewFam();const t=today(
  bindRows($('#app'));$('#pe').onclick=()=>pForm(id);$('#pa').onclick=()=>{evForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};$('#pt').onclick=()=>{tkForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};}
 /* ---- navigation bar ---- */
 const TABS=[['','🏠','Aujourd\'hui'],['cal','📅','Agenda'],['tasks','✅','Tâches'],['fam','👪','Famille'],['etudes','📚','Études']];
-function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const TB=(S.nost?TABS.filter(t=>t[0]!=='etudes'):TABS).concat(S.lg?[['log','🚚','Logistique']]:[]).concat(S.mm?[['mm','🌸','ركني']]:[]);const cur=['','cal','tasks','fam','etudes','log','mm'].includes(a)?a:(a==='p'||a==='chat'?'fam':['e','exam','review','science','search','code','penal','spirit','today','weak'].includes(a)?'etudes':a==='data'||a==='prayer'||a==='sync'?null:'');
+function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const TB=(S.nost?TABS.filter(t=>t[0]!=='etudes'):TABS).concat(S.lg?[['log','🚚','Logistique']]:[]).concat(S.mm?[['mm','🌸','ركني']]:[]).concat(S.la?[['la','🔤','Arabe']]:[]);const cur=['','cal','tasks','fam','etudes','log','mm','la'].includes(a)?a:(a==='p'||a==='chat'?'fam':['e','exam','review','science','search','code','penal','spirit','today','weak'].includes(a)?'etudes':a==='data'||a==='prayer'||a==='sync'?null:'');
  nav.innerHTML=TB.map(([h,e,l])=>`<button class="tb ${h===cur?'on':''}" onclick="go('${h}')"><span>${e}</span><small>${l}</small></button>`).join('');}
 /* ================= 🚚 LOGISTIQUE (profil Papa) ================= */
 const LG_TIPS=[
@@ -599,6 +599,203 @@ function mmBindFr(root,extra){const l=MM_FR.find(x=>x.id===extra);
  root.querySelectorAll('.mmsay[data-i]').forEach(b=>b.onclick=()=>mmSay(l.w[+b.dataset.i][0],slow));
  root.querySelector('#frBk').onclick=()=>go('mm/fr');
  root.querySelector('#frQz').onclick=()=>{MMS.qz=mmQzMake(extra);const b=$('#frBody');b.innerHTML=mmQzHtml();mmQzBind(b);if(MMS.qz.qs[0].t==='b')setTimeout(()=>mmSay(MMS.qz.qs[0].w[0]),250);};}
+/* ================= 🔤 LIRE L'ARABE : du zéro aux premières sourates ================= */
+const LA_ZWJ='‍',LA_F='َ',LA_K='ِ',LA_D='ُ',LA_SK='ْ',LA_SH='ّ',LA_FT='ً',LA_KT='ٍ',LA_DT='ٌ';
+/* [lettre, nom FR, nom parlé, indice de prononciation, [mot, translit, sens], ne se lie pas à gauche] */
+const LA_LET=[
+["ا","Alif","أَلِف","Il sert de « support » : seul, il allonge le son « â ». Au début d'un mot, il porte une voyelle (a, i, ou).",["أَسَد","asad","lion"],1],
+["ب","Bâ","بَاء","Comme le « b » de bateau.",["بَاب","bâb","porte"]],
+["ت","Tâ","تَاء","Comme le « t » de table.",["تِين","tîn","figue"]],
+["ث","Thâ","ثَاء","Comme le « th » anglais de « think » (langue entre les dents). En darija, on dit souvent « t ».",["ثَوْب","thawb","vêtement"]],
+["ج","Jîm","جِيم","Comme le « j » de jour.",["جَمَل","jamal","chameau"]],
+["ح","Ḥâ","حَاء","Un « h » soufflé du fond de la gorge, comme pour réchauffer ses mains.",["حَلِيب","ḥalîb","lait"]],
+["خ","Khâ","خَاء","Comme le « j » espagnol de Juan, ou le « ch » allemand de Bach.",["خُبْز","khoubz","pain"]],
+["د","Dâl","دَال","Comme le « d » de dos.",["دَار","dâr","maison"],1],
+["ذ","Dhâl","ذَال","Comme le « th » anglais de « this » (langue entre les dents).",["ذَهَب","dhahab","or"],1],
+["ر","Râ","رَاء","Un « r » roulé, comme en espagnol.",["رَجُل","rajoul","homme"],1],
+["ز","Zây","زَاي","Comme le « z » de zèbre.",["زَيْت","zayt","huile"],1],
+["س","Sîn","سِين","Comme le « s » de soleil.",["سَمَك","samak","poisson"]],
+["ش","Chîn","شِين","Comme le « ch » de chat.",["شَمْس","chams","soleil"]],
+["ص","Ṣâd","صَاد","Un « s » « lourd », prononcé avec la gorge pleine.",["صَبَاح","ṣabâḥ","matin"]],
+["ض","Ḍâd","ضَاد","Un « d » « lourd », prononcé avec la gorge pleine.",["ضَوْء","ḍaw’","lumière"]],
+["ط","Ṭâ","طَاء","Un « t » « lourd », prononcé avec la gorge pleine.",["طَاوِلَة","ṭâwila","table"]],
+["ظ","Ẓâ","ظَاء","Un « dh » « lourd », prononcé avec la gorge pleine.",["ظَهْر","ẓahr","dos"]],
+["ع","ʿAyn","عَيْن","Un son de gorge : serre la gorge en disant « a ». L'audio t'aidera.",["عَيْن","ʿayn","œil"]],
+["غ","Ghayn","غَيْن","Comme le « r » français « gargouillé », au fond de la gorge.",["غَيْم","ghaym","nuage"]],
+["ف","Fâ","فَاء","Comme le « f » de fleur.",["فِيل","fîl","éléphant"]],
+["ق","Qâf","قَاف","Un « k » prononcé tout au fond de la gorge.",["قَمَر","qamar","lune"]],
+["ك","Kâf","كَاف","Comme le « k » de kilo.",["كِتَاب","kitâb","livre"]],
+["ل","Lâm","لَام","Comme le « l » de lune.",["لَيْل","layl","nuit"]],
+["م","Mîm","مِيم","Comme le « m » de mer.",["مَاء","mâ’","eau"]],
+["ن","Nûn","نُون","Comme le « n » de nuit.",["نُور","noûr","lumière"]],
+["ه","Hâ","هَاء","Un « h » léger, soufflé.",["هِلَال","hilâl","croissant de lune"]],
+["و","Wâw","وَاو","Comme « ou » (ou « w »).",["وَرْدَة","warda","rose"],1],
+["ي","Yâ","يَاء","Comme « i » long, ou « y ».",["يَد","yad","main"]]
+];
+const LA_LAT={"ب":"b","ت":"t","ث":"th","ج":"j","ح":"ḥ","خ":"kh","د":"d","ذ":"dh","ر":"r","ز":"z","س":"s","ش":"ch","ص":"ṣ","ض":"ḍ","ط":"ṭ","ظ":"ẓ","ع":"ʿ","غ":"gh","ف":"f","ق":"q","ك":"k","ل":"l","م":"m","ن":"n","ه":"h","و":"w","ي":"y"};
+const LA_C1=['ب','ت','م','ن','ل','ر','س','د','ك','ف'];
+const LA_C2=LA_C1.concat(['ج','ش','ز','ه']);
+const LA_WORDS=[
+[["بَاب","bâb","porte"],["بَيْت","bayt","maison"],["كِتَاب","kitâb","livre"],["قَلَم","qalam","stylo"],["مَاء","mâ’","eau"],["شَمْس","chams","soleil"],["قَمَر","qamar","lune"],["نُور","noûr","lumière"],["وَلَد","walad","garçon"],["بِنْت","bint","fille"]],
+[["أُمّ","oumm","mère"],["أَب","ab","père"],["أَخ","akh","frère"],["أُخْت","oukht","sœur"],["جَدّ","jadd","grand-père"],["جَدَّة","jadda","grand-mère"],["رَجُل","rajoul","homme"],["امْرَأَة","imra’a","femme"],["طِفْل","ṭifl","enfant"],["صَدِيق","ṣadîq","ami"]],
+[["اللَّه","Allâh","Allah"],["رَبّ","rabb","Seigneur"],["رَحْمَة","raḥma","miséricorde"],["صَلَاة","ṣalât","prière"],["صَبْر","ṣabr","patience"],["جَنَّة","janna","paradis"],["نَار","nâr","feu"],["يَوْم","yawm","jour"],["حَقّ","ḥaqq","vérité"],["دِين","dîn","religion"]]
+];
+const LA_SUR=[
+{id:'ikh',n:"Al-Ikhlâs",ar:"الإخلاص",v:[
+["قُلْ هُوَ اللَّهُ أَحَدٌ","Qoul houwa Llâhou aḥad","Dis : Il est Allah, Unique."],
+["اللَّهُ الصَّمَدُ","Allâhou ṣ-ṣamad","Allah, le Seul à être imploré."],
+["لَمْ يَلِدْ وَلَمْ يُولَدْ","Lam yalid wa lam yoûlad","Il n'a jamais engendré, ni été engendré."],
+["وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ","Wa lam yakoun lahoû koufouwan aḥad","Et nul n'est égal à Lui."]]},
+{id:'kaw',n:"Al-Kawthar",ar:"الكوثر",v:[
+["إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ","Innâ aʿṭaynâka l-kawthar","Nous t'avons certes accordé l'abondance."],
+["فَصَلِّ لِرَبِّكَ وَانْحَرْ","Fa ṣalli li-rabbika wanḥar","Prie donc ton Seigneur et sacrifie."],
+["إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ","Inna châniʾaka houwa l-abtar","Celui qui te hait est, lui, le sans-postérité."]]},
+{id:'asr',n:"Al-ʿAṣr",ar:"العصر",v:[
+["وَالْعَصْرِ","Wa l-ʿaṣr","Par le temps !"],
+["إِنَّ الْإِنسَانَ لَفِي خُسْرٍ","Inna l-insâna la-fî khousr","L'homme est certes en perdition,"],
+["إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ","Illa lladhîna âmanoû wa ʿamiloû ṣ-ṣâliḥâti wa tawâṣaw bi-l-ḥaqqi wa tawâṣaw bi-ṣ-ṣabr","sauf ceux qui croient, font de bonnes œuvres, s'enjoignent mutuellement la vérité et l'endurance."]]},
+{id:'fat',n:"Al-Fâtiḥa",ar:"الفاتحة",v:[
+["بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ","Bismi Llâhi r-raḥmâni r-raḥîm","Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux."],
+["الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ","Al-ḥamdou li-Llâhi rabbi l-ʿâlamîn","Louange à Allah, Seigneur des mondes,"],
+["الرَّحْمَٰنِ الرَّحِيمِ","Ar-raḥmâni r-raḥîm","le Tout Miséricordieux, le Très Miséricordieux,"],
+["مَالِكِ يَوْمِ الدِّينِ","Mâliki yawmi d-dîn","Maître du Jour de la rétribution."],
+["إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ","Iyyâka naʿboudou wa iyyâka nastaʿîn","C'est Toi que nous adorons, et c'est Toi dont nous implorons le secours."],
+["اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ","Ihdinâ ṣ-ṣirâṭa l-moustaqîm","Guide-nous dans le droit chemin,"],
+["صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ","Ṣirâṭa lladhîna anʿamta ʿalayhim ghayri l-maghḍoûbi ʿalayhim wa lâ ḍ-ḍâllîn","le chemin de ceux que Tu as comblés de faveurs, non pas de ceux qui ont encouru Ta colère, ni des égarés."]]}
+];
+const LA_MOD=[["🔤","Les lettres"],["🅰️","Les voyelles courtes"],["🎵","Les voyelles longues"],["✨","Sukûn, shadda, tanwîn"],["📖","Lire des mots"],["🕌","Les premières sourates"]];
+const LA_LES=[
+{id:'l1',m:0,ic:'🅰️',t:"Alif, Bâ, Tâ, Thâ",ty:'let',L:[0,1,2,3],intro:"<h3>Bienvenue ! 🎉</h3><p>L'arabe s'écrit et se lit de <b>droite à gauche</b> ➡️⬅️. Il a <b>28 lettres</b>, et on va les apprendre par petits groupes.</p><p>Bonne nouvelle : si tu parles <b>darija</b>, tu connais déjà tous ces sons. Il ne reste qu'à reconnaître les formes. 💪</p><p>Chaque lettre a une forme qui change un peu selon sa place dans le mot. Pas de panique, on y va doucement.</p>"},
+{id:'l2',m:0,ic:'🐪',t:"Jîm, Ḥâ, Khâ",ty:'let',L:[4,5,6],intro:"<h3>Les « cousines » 👭</h3><p>Ces trois lettres ont la <b>même forme</b>, seul le <b>point</b> change : sans point, un point dessous, un point dessus. Regarde bien les points !</p>"},
+{id:'l3',m:0,ic:'🏡',t:"Dâl, Dhâl, Râ, Zây",ty:'let',L:[7,8,9,10],intro:"<h3>Les lettres « solitaires » 🧍</h3><p>Ces lettres <b>ne se lient pas à la lettre suivante</b> : elles s'arrêtent net. C'est facile à retenir.</p>"},
+{id:'l4',m:0,ic:'☀️',t:"Sîn, Chîn, Ṣâd, Ḍâd",ty:'let',L:[11,12,13,14],intro:"<h3>Les « dents » et les « boucles » 🦷</h3><p><b>Sîn</b> et <b>Chîn</b> se ressemblent : Chîn a 3 points. <b>Ṣâd</b> et <b>Ḍâd</b> ont une grande boucle, Ḍâd a un point.</p>"},
+{id:'l5',m:0,ic:'🔊',t:"Ṭâ, Ẓâ, ʿAyn, Ghayn",ty:'let',L:[15,16,17,18],intro:"<h3>Les lettres de gorge 🗣️</h3><p>Ces sons viennent du fond de la gorge. En darija, tu les dis tous les jours ! <b>ʿAyn</b> et <b>Ghayn</b> : même forme, Ghayn a un point.</p>"},
+{id:'l6',m:0,ic:'🌙',t:"Fâ, Qâf, Kâf, Lâm",ty:'let',L:[19,20,21,22],intro:"<h3>Fâ et Qâf 🌙</h3><p><b>Fâ</b> a un point au-dessus, <b>Qâf</b> en a deux. Attention à ne pas les confondre !</p>"},
+{id:'l7',m:0,ic:'🏁',t:"Mîm, Nûn, Hâ, Wâw, Yâ",ty:'let',L:[23,24,25,26,27],intro:"<h3>Dernier groupe ! 🏁</h3><p>Plus que 5 lettres. Après ça, tu connais tout l'alphabet. Bravo d'avance ! 👏</p>"},
+{id:'l8',m:0,ic:'🏆',t:"Révision de l'alphabet",ty:'letrev',intro:"<h3>Le grand quiz 🏆</h3><p>Voyons ce que tu retiens des 28 lettres. Pas de stress : tu peux recommencer autant que tu veux.</p>"},
+{id:'v1',m:1,ic:'🔼',t:"La fatha : le son « a »",ty:'syl',v:'a',intro:"<h3>Les voyelles courtes</h3><p>En arabe, les lettres sont des <b>consonnes</b>. Pour savoir quelle voyelle dire, on ajoute de <b>petits signes</b>.</p><p>La <b>fatha</b> est un petit trait <b>au-dessus</b> de la lettre : elle donne le son <b>« a »</b>. Exemple : بَ = <b>ba</b>.</p>"},
+{id:'v2',m:1,ic:'🔽',t:"La kasra : le son « i »",ty:'syl',v:'i',intro:"<h3>La kasra</h3><p>La <b>kasra</b> est un petit trait <b>sous</b> la lettre : elle donne le son <b>« i »</b>. Exemple : بِ = <b>bi</b>.</p>"},
+{id:'v3',m:1,ic:'🔸',t:"La damma : le son « ou »",ty:'syl',v:'ou',intro:"<h3>La damma</h3><p>La <b>damma</b> ressemble à un petit « و » <b>au-dessus</b> de la lettre : elle donne le son <b>« ou »</b>. Exemple : بُ = <b>bou</b>.</p>"},
+{id:'v4',m:1,ic:'🎲',t:"Mélange : a, i, ou",ty:'syl',v:'mix',intro:"<h3>Le mélange 🎲</h3><p>Maintenant les trois voyelles ensemble : regarde <b>où est le petit signe</b> (dessus à gauche = a, dessous = i, dessus avec une boucle = ou).</p>"},
+{id:'g1',m:2,ic:'🎼',t:"Le long « â » (avec alif)",ty:'long',v:'a',intro:"<h3>Les voyelles longues</h3><p>Quand on ajoute un <b>alif</b> (ا) après une <b>fatha</b>, le son « a » devient <b>long</b> : بَا = <b>bâ</b>. Il se tient plus longtemps (2 temps).</p>"},
+{id:'g2',m:2,ic:'🎶',t:"Les longs « î » et « oû »",ty:'long',v:'iu',intro:"<h3>Î et oû</h3><p><b>Kasra + yâ (ي)</b> donne un « î » long : بِي = <b>bî</b>.</p><p><b>Damma + wâw (و)</b> donne un « oû » long : بُو = <b>boû</b>.</p>"},
+{id:'g3',m:2,ic:'🎹',t:"Mélange des voyelles longues",ty:'long',v:'mix',intro:"<h3>Mélange 🎹</h3><p>Court ou long ? C'est le petit <b>alif, yâ ou wâw</b> après la lettre qui fait la différence.</p>"},
+{id:'s1',m:3,ic:'🛑',t:"Le sukûn : on s'arrête",ty:'suk',intro:"<h3>Le sukûn</h3><p>Un petit <b>rond</b> au-dessus d'une lettre veut dire : <b>pas de voyelle</b>, on s'arrête sur la consonne. Exemple : بَتْ = <b>bat</b>.</p>"},
+{id:'s2',m:3,ic:'💪',t:"La shadda : on double",ty:'shd',intro:"<h3>La shadda</h3><p>Un petit signe en forme de <b>« w »</b> au-dessus d'une lettre veut dire : on <b>double</b> la consonne. Exemple : بَّ = <b>bba</b>.</p><p>Tu la verras dans le mot <b>Allâh</b> : اللَّه !</p>"},
+{id:'s3',m:3,ic:'🔁',t:"Le tanwîn : « an, in, oun »",ty:'tan',intro:"<h3>Le tanwîn</h3><p>À la fin d'un mot, une <b>voyelle doublée</b> ajoute un son « n » : ـً = <b>an</b>, ـٍ = <b>in</b>, ـٌ = <b>oun</b>. Exemple : شُكْرًا = <b>choukran</b> (merci !).</p>"},
+{id:'w1',m:4,ic:'🏠',t:"Mes premiers mots",ty:'words',W:0,intro:"<h3>Je lis mes premiers mots ! 🎉</h3><p>Tu sais lire les lettres et les voyelles : tu peux lire de vrais mots. Lis lentement, lettre après lettre, de droite à gauche.</p>"},
+{id:'w2',m:4,ic:'👪',t:"La famille",ty:'words',W:1,intro:"<h3>La famille 👨‍👩‍👧</h3><p>Des mots que tu connais déjà à l'oral, maintenant tu les lis !</p>"},
+{id:'w3',m:4,ic:'🌟',t:"Mots du Coran",ty:'words',W:2,intro:"<h3>Mots du Coran 🌟</h3><p>Des mots qu'on rencontre très souvent dans le Coran. Tu vas les reconnaître en lisant.</p>"},
+{id:'q1',m:5,ic:'💎',t:"Sourate Al-Ikhlâs",ty:'sur',S:0,intro:"<h3>Ta première sourate ! 💎</h3><p>Touche chaque mot pour l'entendre. Lis d'abord toute seule, puis vérifie avec la translittération.</p><p class='lanote'>Pour la bonne récitation (tajwîd), écoute un récitateur ou un enseignant : cette appli t'aide à <b>lire</b>, pas à remplacer l'apprentissage oral.</p>"},
+{id:'q2',m:5,ic:'🌊',t:"Sourate Al-Kawthar",ty:'sur',S:1,intro:"<h3>Al-Kawthar 🌊</h3><p>La plus courte sourate : 3 versets. Tu peux déjà la lire !</p>"},
+{id:'q3',m:5,ic:'⏳',t:"Sourate Al-ʿAṣr",ty:'sur',S:2,intro:"<h3>Al-ʿAṣr ⏳</h3><p>3 versets, dont un long. Lis-le mot par mot, sans te presser.</p>"},
+{id:'q4',m:5,ic:'🌹',t:"Sourate Al-Fâtiḥa",ty:'sur',S:3,intro:"<h3>Al-Fâtiḥa 🌹</h3><p>La sourate qu'on lit à chaque prière. Tu es prête à la lire ! 🤲</p>"}
+];
+const LA_LV=[[0,"Graine","🌱"],[60,"Pousse","🌿"],[180,"Bourgeon","🌷"],[360,"Fleur","🌸"],[600,"Lectrice","📖"],[900,"Étoile","⭐"]];
+
+/* ---- vue : Lire l'arabe ---- */
+const LAS={id:null,st:0,qz:null,items:null,tr:false,slow:false,sel:0};
+const laCan=()=>typeof speechSynthesis!=='undefined'&&typeof SpeechSynthesisUtterance!=='undefined';
+function laSay(t,slow){if(!laCan()){toast('Pas de voix disponible sur ce téléphone');return;}try{const u=new SpeechSynthesisUtterance(String(t));u.lang='ar-SA';u.rate=slow?0.45:0.7;const v=(speechSynthesis.getVoices()||[]).find(x=>/^ar/i.test(x.lang));if(v)u.voice=v;u.onerror=()=>{};speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){toast('Pas de voix disponible sur ce téléphone');}}
+function laD(){const d=S.lad=S.lad&&typeof S.lad==='object'?S.lad:{};if(!d.d||typeof d.d!=='object')d.d={};if(!Array.isArray(d.days))d.days=[];return d;}
+const laStars=id=>laD().d[id]||0;
+const laPts=()=>LA_LES.reduce((s,l)=>{const st=laStars(l.id);return s+(st>0?20+st*10:0);},0);
+function laLevel(p){let i=0;LA_LV.forEach((l,k)=>{if(p>=l[0])i=k;});return {i,cur:LA_LV[i],nx:LA_LV[i+1]||null};}
+function laStreak(){const s=new Set(laD().days);let n=0,d=today();if(!s.has(d))d=addD(d,-1);while(s.has(d)){n++;d=addD(d,-1);}return n;}
+const laOpen=i=>i===0||laStars(LA_LES[i-1].id)>0;
+const laNext=()=>{const i=LA_LES.findIndex(l=>laStars(l.id)===0);return i<0?null:LA_LES[i];};
+const laShuf=a=>a.slice().sort(()=>Math.random()-.5);
+const LA_V={a:[LA_F,'a'],i:[LA_K,'i'],ou:[LA_D,'ou']};
+function laGen(l){const T=l.ty,C=laShuf(LA_C2),out=[];
+ if(T==='let'||T==='letrev'){return (T==='let'?l.L:LA_LET.map((_,i)=>i)).map(i=>({ar:LA_LET[i][0],lat:LA_LET[i][1],say:LA_LET[i][2],ix:i}));}
+ if(T==='words'){return LA_WORDS[l.W].map(w=>({ar:w[0],lat:w[2],tr:w[1],say:w[0]}));}
+ if(T==='syl'){const vs=l.v==='mix'?['a','i','ou']:[l.v],n=l.v==='mix'?12:C.length;for(let k=0;k<n;k++){const c=C[k%C.length],v=vs[k%vs.length];out.push({ar:c+LA_V[v][0],lat:LA_LAT[c]+LA_V[v][1]});}}
+ else if(T==='long'){const F={a:[LA_F+'ا','â'],i:[LA_K+'ي','î'],u:[LA_D+'و','oû']},vs=l.v==='a'?['a']:l.v==='iu'?['i','u']:['a','i','u'],n=l.v==='a'?C.length:l.v==='iu'?14:12;for(let k=0;k<n;k++){const c=C[k%C.length],f=F[vs[k%vs.length]];out.push({ar:c+f[0],lat:LA_LAT[c]+f[1]});}}
+ else if(T==='suk'){const vs=['a','i','ou'];for(let k=0;k<12;k++){const c=C[k%C.length],d=C[(k+5)%C.length],v=vs[k%3];out.push({ar:c+LA_V[v][0]+d+LA_SK,lat:LA_LAT[c]+LA_V[v][1]+LA_LAT[d]});}}
+ else if(T==='shd'){const vs=['a','i','ou'],C1=laShuf(LA_C1);for(let k=0;k<10;k++){const c=C1[k%C1.length],v=vs[k%3];out.push({ar:c+LA_SH+LA_V[v][0],lat:LA_LAT[c]+LA_LAT[c]+LA_V[v][1]});}}
+ else if(T==='tan'){const t=[[LA_FT+'ا','an'],[LA_KT,'in'],[LA_DT,'oun']];for(let k=0;k<12;k++){const c=C[k%C.length],x=t[k%3];out.push({ar:c+x[0],lat:LA_LAT[c]+x[1]});}}
+ return out;}
+const laSteps=l=>l.ty==='sur'?1+LA_SUR[l.S].v.length:l.ty==='let'?l.L.length+2:3;
+/* ---- quiz ---- */
+function laPool(l,items){if(l.ty==='words')return [].concat(...LA_WORDS).map(w=>({ar:w[0],lat:w[2],tr:w[1],say:w[0]}));if(l.ty==='let'){const mx=Math.max.apply(null,l.L);return LA_LET.slice(0,mx+1).map((x,i)=>({ar:x[0],lat:x[1],say:x[2],ix:i}));}return items;}
+function laQzMake(l,items){const N=l.ty==='letrev'?10:8,can=laCan(),words=l.ty==='words',pool=laPool(l,items);let base=laShuf(items);while(base.length<N)base=base.concat(laShuf(items));base=base.slice(0,N);
+ const T=can?['hear','see','rev']:['see','rev'];
+ return {l:l.id,N,i:0,sc:0,a:null,qs:base.map((it,k)=>{const t=T[k%T.length],others=laShuf(pool.filter(x=>x.ar!==it.ar&&x.lat!==it.lat)).slice(0,3),opts=laShuf(others.concat([it]));return {t,it,opts,oa:(t!=='see')&&!(words&&t==='hear')};})};}
+const laStarsOf=(sc,N)=>sc>=N-1?3:sc>=Math.ceil(N*.7)?2:sc>=Math.ceil(N*.4)?1:0;
+function laQzHtml(l){const q=LAS.qz,words=l.ty==='words';
+ if(q.i>=q.N){const s=laStarsOf(q.sc,q.N),first=q.first;return `<div class="plan" style="text-align:center"><h3>🏁 Résultat</h3><div style="font-size:2.2rem">${'⭐'.repeat(s)}${'☆'.repeat(3-s)}</div><div class="lgbig">${q.sc} / ${q.N}</div><div class="mini" style="margin:6px 0">${s===3?'Machallah, parfait ! 🌟':s===2?'Très bien ! Encore un petit effort pour les 3 étoiles 💪':s===1?'Bravo, c’est validé ! Tu peux rejouer pour plus d’étoiles.':'Il faut au moins '+Math.ceil(q.N*.4)+' bonnes réponses pour valider. Relis la leçon, puis réessaie, tu vas y arriver 💪'}</div>${s>0&&first?`<div class="mini">🔓 Leçon suivante débloquée !</div>`:''}<div class="row" style="justify-content:center;margin-top:10px"><button class="btn alt" type="button" id="laAg">🔄 Rejouer</button><button class="btn alt" type="button" id="laRv">📖 Revoir</button>${s>0?'<button class="btn" type="button" id="laNx2">Continuer →</button>':''}</div></div>`;}
+ const Q=q.qs[q.i],it=Q.it;
+ const pr=Q.t==='see'?`<div class="laBig laa" lang="ar">${esc(it.ar)}</div><div style="text-align:center">${laCan()?'<button type="button" class="mmsay laPl" data-s="'+esc(it.say||it.ar)+'">🔊</button>':''}</div><div class="lgqq" style="text-align:center">${words?'Que veut dire ce mot ?':l.ty==='let'||l.ty==='letrev'?'Quelle est cette lettre ?':'Comment ça se lit ?'}</div>`
+  :Q.t==='hear'?`<div style="text-align:center"><button type="button" class="mmsay mmbig laPl" data-s="${esc(it.say||it.ar)}">🔊</button></div><div class="lgqq" style="text-align:center">${words?'Écoute, puis choisis le sens :':'Écoute : laquelle entends-tu ?'}</div>`
+  :`<div class="laLat">${esc(it.lat)}</div><div class="lgqq" style="text-align:center">${words?'Trouve ce mot en arabe :':'Trouve-le en arabe :'}</div>`;
+ return `<div class="plan"><div class="mini">Question ${q.i+1} / ${q.N}</div><div class="lgbar" style="margin:4px 0 8px"><i style="width:${Math.round(q.i/q.N*100)}%"></i></div>${pr}<div class="${Q.oa?'lgg2':'lgq'}" style="margin-top:10px">${Q.opts.map((o,j)=>{let c='btn alt lgo'+(Q.oa?' laOa':'');if(q.a!==null){if(o===it)c='btn lgo lgok'+(Q.oa?' laOa':'');else if(j===q.a)c='btn alt lgo lgko'+(Q.oa?' laOa':'');}return `<button type="button" class="${c}" data-o="${j}" ${q.a!==null?'disabled':''}>${Q.oa?`<span class="laa" lang="ar">${esc(o.ar)}</span>`:esc(o.lat)}</button>`;}).join('')}</div>
+ ${q.a!==null?`<div class="mini lgex" style="margin-top:8px">${Q.opts[q.a]===it?'✅ Bravo !':'❌ La réponse :'} <span class="laa" lang="ar" style="font-size:1.5rem">${esc(it.ar)}</span> = <b>${esc(it.lat)}</b>${it.tr?` <i>(${esc(it.tr)})</i>`:''}</div><div class="row" style="margin-top:8px"><button class="btn" type="button" id="laNx">${q.i+1>=q.N?'Résultat':'Suivant'} →</button></div>`:''}</div>`;}
+function laQzFinish(l){const q=LAS.qz,s=laStarsOf(q.sc,q.N);q.first=false;if(s>0)laDone(l,s,q);}
+function laDone(l,s,q){const d=laD(),old=d.d[l.id]||0;if(q)q.first=old===0;if(s>old)d.d[l.id]=s;const t=today();if(!d.days.includes(t)){d.days.push(t);d.days=d.days.slice(-90);}save();addXp(old===0?20+s*5:(s>old?(s-old)*5:1));if(s===3&&old<3){try{confetti();}catch(e){}}}
+/* ---- leçons ---- */
+function laForms(ix){const c=LA_LET[ix][0],nj=LA_LET[ix][5];const F=[['Seule',c],['Début',nj?c:c+LA_ZWJ],['Milieu',nj?LA_ZWJ+c:LA_ZWJ+c+LA_ZWJ],['Fin',LA_ZWJ+c]];
+ return `<div class="laFm">${F.map(f=>`<div><div class="laa" lang="ar">${esc(f[1])}</div><div class="mini">${f[0]}</div></div>`).join('')}</div>${nj?'<div class="mini" style="text-align:center">⛔ Cette lettre ne se lie pas à la suivante.</div>':''}`;}
+function laLetCard(ix,n,tot){const x=LA_LET[ix],ex=x[4];return `<div class="plan laC"><div class="mini">Lettre ${n} / ${tot}</div><div class="laBig laa" lang="ar">${esc(x[0])}</div><div class="laNm">${esc(x[1])}</div>
+ <div class="row" style="justify-content:center;gap:10px">${laCan()?`<button type="button" class="mmsay laPl" data-s="${esc(x[2])}">🔊</button><button type="button" class="mmsay laPl" data-s="${esc(x[2])}" data-sl="1" title="Lentement">🐢</button>`:''}</div>
+ <div class="lgr">🗣️ ${esc(x[3])}</div>${laForms(ix)}
+ <div class="lgr">📝 Exemple : <span class="laa" lang="ar" style="font-size:1.6rem">${esc(ex[0])}</span> — <b>${esc(ex[1])}</b> (${esc(ex[2])}) ${laCan()?`<button type="button" class="mmsay laPl" style="width:40px;height:40px;font-size:1.1rem" data-s="${esc(ex[0])}">🔊</button>`:''}</div></div>`;}
+function laGrid(l){const w=l.ty==='words';return `<div class="plan"><h3>${w?'Lis, écoute, répète':'Touche pour écouter'}</h3><div class="mini">${w?'Lis chaque mot lentement, de droite à gauche. Touche 🔊 pour vérifier.':'Lis la case, puis touche-la pour entendre. La prononciation est écrite dessous.'}</div></div>${w?LAS.items.map((x,i)=>`<div class="plan laW"><div class="laWr"><div class="laa" lang="ar" style="font-size:2rem">${esc(x.ar)}</div><div style="flex:1;text-align:start"><b>${esc(x.tr)}</b><div class="mini">${esc(x.lat)}</div></div>${laCan()?`<button type="button" class="mmsay laPl" data-s="${esc(x.ar)}">🔊</button>`:''}</div></div>`).join(''):`<div class="laGd">${LAS.items.map(x=>`<button type="button" class="laCell laPl" data-s="${esc(x.ar)}"><span class="laa" lang="ar">${esc(x.ar)}</span><small>${esc(x.lat)}</small></button>`).join('')}</div>`}`;}
+function laSur(l,st){const S0=LA_SUR[l.S],n=S0.v.length;if(st>n)return `<div class="plan" style="text-align:center"><h3>🎉 Bravo !</h3><div class="mini">Tu as lu toute la sourate <b>${esc(S0.n)}</b>.</div><div style="font-size:2.2rem">⭐⭐⭐</div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn" type="button" id="laFin">${laStars(l.id)>0?'Terminer':'Valider la leçon ✅'}</button></div></div>`;
+ const v=S0.v[st-1],ws=v[0].split(' ');return `<div class="plan"><div class="mini">${esc(S0.n)} · verset ${st} / ${n}</div><div class="laVs laa" lang="ar">${ws.map((w,i)=>`<span class="laWd laPl" data-s="${esc(w)}">${esc(w)}</span>`).join(' ')}</div><div class="mini" style="text-align:center">👆 Touche un mot pour l’entendre</div>
+ <div class="row" style="justify-content:center;margin:8px 0">${laCan()?`<button type="button" class="btn alt laPl" data-s="${esc(v[0])}">🔊 Verset</button><button type="button" class="btn alt laPl" data-s="${esc(v[0])}" data-sl="1">🐢 Lent</button>`:''}</div>
+ <div class="lgr laTr">🗣️ <i>${esc(v[1])}</i></div><div class="row" style="margin-top:8px"><button type="button" class="btn alt" id="laTg">${LAS.tr?'🙈 Cacher la traduction':'👁️ Voir la traduction'}</button></div>${LAS.tr?`<div class="lgr">🇫🇷 ${esc(v[2])}</div>`:''}</div>`;}
+const laLast=l=>l.ty==='sur'?LA_SUR[l.S].v.length+1:l.ty==='let'?l.L.length+1:l.ty==='letrev'?1:2;
+function laKind(l,st){if(st===0)return 'intro';if(l.ty==='sur')return st>LA_SUR[l.S].v.length?'end':'verse';if(l.ty==='let')return st<=l.L.length?'card':'qz';if(l.ty==='letrev')return 'qz';return st===1?'grid':'qz';}
+function laLesBody(l){const st=LAS.st,k=laKind(l,st);
+ if(k==='intro')return `<div class="plan">${l.intro}</div>`;
+ if(k==='card')return laLetCard(l.L[st-1],st,l.L.length);
+ if(k==='grid')return laGrid(l);
+ if(k==='verse'||k==='end')return laSur(l,st);
+ LAS.qz=LAS.qz||laQzMake(l,LAS.items);return laQzHtml(l);}
+function laNavHtml(l){const st=LAS.st,k=laKind(l,st),last=laLast(l);if(k==='qz'||k==='end')return '';const nk=laKind(l,st+1);
+ return `<div class="row laNav">${st>0?'<button type="button" class="btn alt" id="laPv">← Précédent</button>':'<span></span>'}<button type="button" class="btn" id="laGo">${st===0?'C’est parti ! →':nk==='qz'?'Passer au quiz →':nk==='end'?'Terminer →':'Suivant →'}</button></div>`;}
+function laLesson(id){const l=LA_LES.find(x=>x.id===id);if(!l)return laHome();
+ if(!LAS.items||LAS.id!==id){LAS.id=id;LAS.st=0;LAS.qz=null;LAS.tr=false;LAS.items=l.ty==='sur'?[]:laGen(l);}
+ const tot=laLast(l)+1;
+ return `<div class="row" style="margin:6px 0"><button class="btn alt" type="button" id="laBk">← Parcours</button><span class="sp"></span><span class="mini">${l.ic} ${esc(l.t)}</span></div><div class="lgbar" style="margin-bottom:8px"><i style="width:${Math.round(LAS.st/(tot-1)*100)}%"></i></div><div id="laBody">${laLesBody(l)}</div><div id="laNav">${laNavHtml(l)}</div>`;}
+function laDraw(){const l=LA_LES.find(x=>x.id===LAS.id);const b=$('#laBody');if(!l||!b)return;b.innerHTML=laLesBody(l);$('#laNav').innerHTML=laNavHtml(l);laBindLesson(l);window.scrollTo(0,0);}
+function laBindLesson(l){const A=$('#app');
+ A.querySelectorAll('.laPl').forEach(b=>b.onclick=ev=>{ev.stopPropagation();laSay(b.dataset.s,!!b.dataset.sl||LAS.slow);});
+ const bk=$('#laBk');if(bk)bk.onclick=()=>go('la');
+ const pv=$('#laPv');if(pv)pv.onclick=()=>{LAS.st=Math.max(0,LAS.st-1);laDraw();};
+ const gg=$('#laGo');if(gg)gg.onclick=()=>{LAS.st=Math.min(laLast(l),LAS.st+1);laDraw();if(laKind(l,LAS.st)==='qz')laQzAuto(l);};
+ const tg=$('#laTg');if(tg)tg.onclick=()=>{LAS.tr=!LAS.tr;const sy=window.scrollY;laDraw();window.scrollTo(0,sy);};
+ const fin=$('#laFin');if(fin)fin.onclick=()=>{if(laStars(l.id)===0){laDone(l,3);toast('Sourate validée ! 🌟');}go('la');};
+ if(laKind(l,LAS.st)==='qz')laQzBind(l);}
+function laQzAuto(l){const q=LAS.qz;if(q&&q.i<q.N&&q.qs[q.i].t==='hear'){const it=q.qs[q.i].it,i0=q.i;setTimeout(()=>{if(LAS.qz===q&&q.i===i0)laSay(it.say||it.ar);},300);}}
+function laQzDraw(l){const b=$('#laBody');if(!b)return;b.innerHTML=laQzHtml(l);laBindLesson(l);}
+function laQzBind(l){const q=LAS.qz;if(!q)return;
+ $('#app').querySelectorAll('.lgo[data-o]').forEach(b=>b.onclick=()=>{if(q.a!==null)return;const Q=q.qs[q.i];q.a=+b.dataset.o;if(Q.opts[q.a]===Q.it)q.sc++;laQzDraw(l);});
+ const nx=$('#laNx');if(nx)nx.onclick=()=>{q.i++;q.a=null;if(q.i>=q.N)laQzFinish(l);laQzDraw(l);laQzAuto(l);};
+ const ag=$('#laAg');if(ag)ag.onclick=()=>{LAS.qz=laQzMake(l,LAS.items);laQzDraw(l);laQzAuto(l);};
+ const rv=$('#laRv');if(rv)rv.onclick=()=>{LAS.st=l.ty==='letrev'?0:1;LAS.qz=null;laDraw();};
+ const n2=$('#laNx2');if(n2)n2.onclick=()=>{const i=LA_LES.findIndex(x=>x.id===l.id),nx=LA_LES[i+1];LAS.id=null;LAS.items=null;LAS.qz=null;if(nx)go('la/l/'+nx.id);else go('la');};}
+/* ---- accueil / parcours ---- */
+function laHome(){const p=laPts(),lv=laLevel(p),nx=laNext(),stk=laStreak(),done=LA_LES.filter(l=>laStars(l.id)>0).length;
+ const pct=lv.nx?Math.round((p-lv.cur[0])/(lv.nx[0]-lv.cur[0])*100):100;
+ return `<div class="plan ladash"><div class="mmlh"><span class="mmli">${lv.cur[2]}</span><div style="flex:1"><div><b>Niveau : ${esc(lv.cur[1])}</b></div><div class="mini">${p} points${lv.nx?' · encore '+(lv.nx[0]-p)+' pour « '+esc(lv.nx[1])+' » '+lv.nx[2]:' · niveau maximum 🎉'}</div></div><div class="mini" title="Jours de suite">🔥 ${stk}</div></div><div class="lgbar" style="margin-top:8px"><i style="width:${pct}%"></i></div><div class="mini" style="margin-top:6px">${done} leçon${done>1?'s':''} sur ${LA_LES.length} terminée${done>1?'s':''}</div>
+ ${nx?`<div class="row" style="margin-top:10px"><button class="btn" type="button" id="laCont">▶️ ${done?'Continuer':'Commencer'} : ${esc(nx.t)}</button></div>`:'<div class="mini" style="margin-top:8px">🎓 Parcours terminé, machallah ! Tu peux tout rejouer pour réviser.</div>'}</div>
+ ${LA_MOD.map((m,mi)=>{const ls=LA_LES.map((l,i)=>[l,i]).filter(x=>x[0].m===mi);return `<div class="plan"><h3>${m[0]} ${esc(m[1])}</h3>${ls.map(([l,i])=>{const op=laOpen(i),s=laStars(l.id);return `<div class="laLs ${op?'':'lock'}" data-l="${l.id}" role="button" tabindex="0"><span class="mmli">${op?l.ic:'🔒'}</span><div style="flex:1;min-width:0"><b>${esc(l.t)}</b></div><div class="mmst">${op?'⭐'.repeat(s)+'☆'.repeat(3-s):''}</div></div>`;}).join('')}</div>`;}).join('')}
+ <div class="plan"><div class="mini">💡 Conseil : 5 minutes par jour valent mieux qu’une heure par semaine. Et pour bien réciter (tajwîd), écoute aussi un récitateur ou un enseignant : l’appli t’aide à <b>lire</b>.</div></div>`;}
+function laAbc(){return `${laLetCard(LAS.sel,LAS.sel+1,28)}<div class="plan"><h3>🔤 L’alphabet arabe</h3><div class="mini">Touche une lettre pour la voir en détail et l’entendre. Elle s’écrit de droite à gauche.</div><div class="laAl">${LA_LET.map((y,i)=>`<button type="button" class="laCell laSel ${i===LAS.sel?'on':''}" data-i="${i}"><span class="laa" lang="ar">${esc(y[0])}</span><small>${esc(y[1])}</small></button>`).join('')}</div></div>`;}
+function laDashCard(){if(!S.la)return '';const nx=laNext(),p=laPts(),lv=laLevel(p),stk=laStreak();return `<div class="plan ladash" onclick="go('la')" style="cursor:pointer"><h3>🔤 J’apprends à lire l’arabe</h3><div class="mini">${lv.cur[2]} ${esc(lv.cur[1])} · 🔥 ${stk} jour${stk>1?'s':''}</div><div class="lgtt" style="margin-top:4px">${nx?(laStars(LA_LES[0].id)?'Prochaine leçon : ':'Première leçon : ')+'<b>'+esc(nx.t)+'</b>':'🎓 Parcours terminé !'}</div></div>`;}
+function viewLa(sub,extra){if(!S.la){location.hash='';return;}const TB=[['','🗺️','Parcours'],['abc','🔤','Alphabet']];
+ if(sub==='l'){const i=LA_LES.findIndex(x=>x.id===extra);if(i<0||!laOpen(i)){location.hash='la';return;}}else{sub=sub==='abc'?'abc':'';LAS.id=null;LAS.items=null;LAS.qz=null;}
+ const body=sub==='l'?laLesson(extra):sub==='abc'?laAbc():laHome(),act=sub==='abc'?'abc':sub==='l'?'x':'';
+ setApp(`<div class="laroot" dir="ltr" lang="fr" data-nt><div class="banner" style="--c:#00897b"><h1>🔤 Lire l’arabe</h1><div class="mini" style="color:#fff;opacity:.9">Du zéro aux premières sourates, pas à pas</div></div>
+ ${sub==='l'?'':`<div class="tabs lgtabs latabs">${TB.map(t=>`<button class="tab ${t[0]===act?'on':''}" data-s="${t[0]}" type="button"><span class="lgti">${t[1]}</span><span>${t[2]}</span></button>`).join('')}</div>`}${body}</div>`);
+ const A=$('#app');A.querySelectorAll('.latabs .tab').forEach(b=>b.onclick=()=>go(b.dataset.s?'la/'+b.dataset.s:'la'));
+ if(sub==='l'){laBindLesson(LA_LES.find(x=>x.id===extra));return;}
+ A.querySelectorAll('.laPl').forEach(b=>b.onclick=ev=>{ev.stopPropagation();laSay(b.dataset.s,!!b.dataset.sl);});
+ if(sub==='abc'){A.querySelectorAll('.laSel').forEach(b=>b.onclick=()=>{LAS.sel=+b.dataset.i;viewLa('abc');});return;}
+ const c=$('#laCont');if(c)c.onclick=()=>go('la/l/'+laNext().id);
+ A.querySelectorAll('.laLs').forEach(el=>{const open=()=>{if(el.classList.contains('lock')){toast('Termine d’abord la leçon précédente 🔒');return;}go('la/l/'+el.dataset.l);};el.onclick=open;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};});}
+
 /* ---- rappels ---- */
 function fireAt(date,tm,rm){if(rm==='m')return dtm(date,'08:00');const base=dtm(date,tm||'08:00');return new Date(base.getTime()-Number(rm)*60000);}
 function famTick(){try{if(!SY.at||loveOpen||document.querySelector('.fm,.lv-ov'))return;const now=Date.now();S.rf=S.rf||{};
@@ -860,13 +1057,13 @@ async function admFam(fid){let r;try{r=await admRpc('admin_family',{f:fid});}cat
 const HJH='bb0c3ca40c41fe006b1e4117548511317ccb665906c1acfea94eeaa51db7a2ca';
 function doLogout(){if(!confirm('Te déconnecter ? Tes données restent sur cet appareil.'))return;const o=$('#acO');if(o)o.remove();const fin=()=>{SY.at=SY.rt='';SY.fid=SY.code=SY.fname='';SY.adm=undefined;SY.st='out';sySave();chStop();syUI();route();};pushDrop().then(fin,fin);}
 function openAccount(){if($('#acO'))return;const d=document.createElement('div');d.className='lv-ov';d.id='acO';
- const typ=(S.stl==='h'?'👩‍🎓 Hajar (études de droit affichées)':S.stl==='o'?'👤 Compte famille':'')+(S.lg?' · 🚚 Logistique':'')+(S.mm?' · 🌸 Maman':'');
+ const typ=(S.stl==='h'?'👩‍🎓 Hajar (études de droit affichées)':S.stl==='o'?'👤 Compte famille':'')+(S.lg?' · 🚚 Logistique':'')+(S.mm?' · 🌸 Maman':'')+(S.la?' · 🔤 Arabe':'');
  d.innerHTML=`<div class="lv-card pf" style="text-align:start;padding:18px 16px"><h3 style="margin:0 0 4px">👤 Mon compte</h3>
  <div><b data-nt>${esc(S.me||'—')}</b> <span class="mini" data-nt>${esc(SY.email||'')}</span>${typ?`<div class="mini">${typ}</div>`:''}</div>
  ${SY.at?`<div class="acav"><span id="acAvI">${chAvSpan(chMe(),esc((S.me||'?').trim().charAt(0).toUpperCase()||'?'),chCol(chMe()),'big')}</span><div style="display:grid;gap:6px"><button class="btn alt" id="acAv" type="button">📷 Photo de profil</button>${AV.m[chMe()]?'<button class="btn alt" id="acAvX" type="button">Retirer la photo</button>':''}</div><input type="file" id="acAvF" accept="image/*" hidden></div><div class="acph"><input class="srch" id="acPh" type="tel" inputmode="tel" autocomplete="tel" placeholder="+33 6 12 34 56 78" value="${esc(PH.m[chMe()]||'')}"><button class="btn alt" id="acPhS" type="button">Enregistrer</button></div><div class="mini">📞 Pour que ta famille puisse t’appeler (WhatsApp ou appel). Seuls les membres de ta famille le voient.</div>`:''}
  ${SY.fid?`<div class="mini" style="margin-top:4px">👪 <b data-nt>${esc(SY.fname||'')}</b> · <span style="font-family:monospace;letter-spacing:.08em;user-select:all" data-nt>${esc(SY.code||'')}</span></div>`:'<div class="mini" style="margin-top:4px">👪 Pas encore de famille : va dans l\'onglet « Famille ».</div>'}
  <div class="mini" style="margin:4px 0 10px" data-nt>${esc(syStatTxt())}</div>
- <div class="acg"><button class="btn" id="acSy">🔄 Synchroniser</button>${matchMedia('(display-mode: standalone)').matches?'':'<button class="btn alt" id="acIn">📲 Installer</button>'}<button class="btn alt" id="acHl">❓ Aide</button><button class="btn alt" id="acPw">🔑 Mot de passe</button><button class="btn alt" id="acDt">☁️ Détails synchro</button>${S.stl==='h'?'':'<button class="btn alt" id="acH">👩‍🎓 Je suis Hajar</button>'}<button class="btn alt" id="acLg">${S.lg?'🚚 Retirer le profil Logistique':'🚚 Profil Logistique (Papa)'}</button><button class="btn alt" id="acMm">${S.mm?'🌸 Retirer le profil Maman':'🌸 Profil Maman'}</button>${SY.adm||SY.email===OWNER?'<button class="btn alt" id="acAd">🛠️ Admin</button>':''}<button class="btn alt" id="acWp">🧹 Effacer cet appareil</button><button class="btn alt" id="acDel" style="color:#c62828">🗑️ Supprimer mon compte</button></div>
+ <div class="acg"><button class="btn" id="acSy">🔄 Synchroniser</button>${matchMedia('(display-mode: standalone)').matches?'':'<button class="btn alt" id="acIn">📲 Installer</button>'}<button class="btn alt" id="acHl">❓ Aide</button><button class="btn alt" id="acPw">🔑 Mot de passe</button><button class="btn alt" id="acDt">☁️ Détails synchro</button>${S.stl==='h'?'':'<button class="btn alt" id="acH">👩‍🎓 Je suis Hajar</button>'}<button class="btn alt" id="acLg">${S.lg?'🚚 Retirer le profil Logistique':'🚚 Profil Logistique (Papa)'}</button><button class="btn alt" id="acMm">${S.mm?'🌸 Retirer le profil Maman':'🌸 Profil Maman'}</button><button class="btn alt" id="acLa">${S.la?'🔤 Retirer « Lire l’arabe »':'🔤 Apprendre à lire l’arabe'}</button>${SY.adm||SY.email===OWNER?'<button class="btn alt" id="acAd">🛠️ Admin</button>':''}<button class="btn alt" id="acWp">🧹 Effacer cet appareil</button><button class="btn alt" id="acDel" style="color:#c62828">🗑️ Supprimer mon compte</button></div>
  <div class="acg" style="margin-top:8px"><button class="btn alt" id="acOut" style="color:#c62828">🚪 Me déconnecter</button><button class="btn" id="acX">Fermer</button></div></div>`;
  document.body.appendChild(d);const c=()=>d.remove();d.onclick=e=>{if(e.target===d)c();};$('#acX',d).onclick=c;
  $('#acSy',d).onclick=()=>{syncNow();toast('Synchronisation…');c();};$('#acDt',d).onclick=()=>{c();go('sync');};$('#acPw',d).onclick=()=>{c();pwForm();};$('#acHl',d).onclick=()=>{c();openHelp();};$('#acOut',d).onclick=doLogout;$('#acDel',d).onclick=deleteMyAccount;
@@ -877,6 +1074,7 @@ function openAccount(){if($('#acO'))return;const d=document.createElement('div')
  const ins=$('#acIn',d);if(ins)ins.onclick=()=>{if(DEFER){c();doInstall();}else toast(/iphone|ipad/i.test(navigator.userAgent)?(/crios|fxios|edgios|opios/i.test(navigator.userAgent)?'Ouvre ce lien dans Safari, puis touche Partager et « Sur l’écran d’accueil »':'Touche Partager puis « Sur l’écran d’accueil »'):'Menu ⋮ du navigateur, puis « Installer l’application »',6000);};
  const h=$('#acH',d);if(h)h.onclick=async()=>{const k=(prompt('Code de vérification')||'').trim();if(!k)return;if((await sha256(k))!==HJH){toast('Code de vérification incorrect.');return;}S.stl='h';S.nost=0;S.nsa=0;save();c();langApply();renderTabs((location.hash.slice(1).split('/')[0])||'');route();toast('Compte Hajar activé ✅');};
  const lg=$('#acLg',d);if(lg)lg.onclick=()=>{if(S.lg){if(!confirm('Retirer l’onglet Logistique de ce compte ?'))return;S.lg=0;}else S.lg=1;save();c();langApply();renderTabs((location.hash.slice(1).split('/')[0])||'');if(S.lg){go('log');toast('Profil Logistique activé 🚚');}else{go('');toast('Profil Logistique retiré');route();}};
+ const lab=$('#acLa',d);if(lab)lab.onclick=()=>{const tb=()=>renderTabs((location.hash.slice(1).split('/')[0])||'');if(S.la){if(!confirm('Retirer l’onglet « Lire l’arabe » ? Ta progression est conservée.'))return;S.la=0;save();c();langApply();tb();go('');toast('Onglet retiré');route();return;}S.la=1;save();c();langApply();tb();go('la');toast('Bienvenue ! On commence 🔤');};
  const mmb=$('#acMm',d);if(mmb)mmb.onclick=()=>{const tb=()=>renderTabs((location.hash.slice(1).split('/')[0])||'');if(S.mm){if(!confirm('Retirer l’onglet Maman de ce compte ?'))return;S.mm=0;save();c();langApply();tb();go('');toast('Profil Maman retiré');route();return;}S.mm=1;S.fs=Math.max(S.fs||100,115);save();c();if(!isAr())setLang('ar');applyPrefs();tb();go('mm');toast('تم تفعيل ملف ماما 🌸');};
  const o2=$('#acO2',d);if(o2)o2.onclick=()=>{if(!confirm('Compte famille : la partie études et les messages personnels seront masqués. Continuer ?'))return;S.stl='o';S.nost=1;S.nsa=0;save();c();langApply();renderTabs('');route();};}
 /* mot de passe : oublié / changer */
