@@ -586,11 +586,18 @@ function chTyping(){const now=Date.now();if(now-(CH.lt||0)<2500||!CH.ws||!CH.wsO
 /* ---- vocal ---- */
 function chRecMime(){const l=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];if(!window.MediaRecorder)return '';return l.find(m=>{try{return MediaRecorder.isTypeSupported(m);}catch(e){return false;}})||'';}
 async function chRecStart(){if(!navigator.mediaDevices||!window.MediaRecorder){toast('Vocal non disponible sur ce navigateur');return;}let st;try{st=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){const n=e&&e.name;toast(n==='NotFoundError'||n==='OverconstrainedError'?'Aucun micro trouvé sur cet appareil':n==='NotAllowedError'||n==='SecurityError'?'Micro refusé : autorise-le dans les réglages du site':'Micro indisponible : '+(n||'erreur'),4500);return;}
- const mt=chRecMime(),rc=new MediaRecorder(st,mt?{mimeType:mt}:undefined),ch=[];const R=CH.rec={rc,st,ch,t0:Date.now(),conv:CH.conv,send:0,mt:(mt||rc.mimeType||'audio/webm').split(';')[0]};
+ const stopSt=()=>{try{st.getTracks().forEach(t=>t.stop());}catch(e){}};
+ if(CH.rec||document.hidden||!chOn()){stopSt();return;}
+ let mt,rc;try{mt=chRecMime();rc=new MediaRecorder(st,mt?{mimeType:mt}:undefined);}catch(e){stopSt();toast('Vocal non disponible sur ce navigateur');return;}
+ const ch=[];const R=CH.rec={rc,st,ch,t0:Date.now(),conv:CH.conv,send:0,mt:(mt||rc.mimeType||'audio/webm').split(';')[0]};
  rc.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data);};
- rc.onstop=()=>{st.getTracks().forEach(t=>t.stop());clearInterval(R.tm);const dur=Math.round((Date.now()-R.t0)/1000);const send=R.send;CH.rec=null;chComposer();if(!send)return;if(dur<1){toast('Vocal trop court');return;}const blob=new Blob(ch,{type:R.mt});const ext=/mp4/.test(R.mt)?'m4a':/ogg/.test(R.mt)?'ogg':'webm';chPost({conv:R.conv,kind:'voice',blob,mime:R.mt,ext,dur:Math.min(120,dur),meta:chMeta()});};
+ st.getTracks().forEach(t=>{t.onended=()=>{if(CH.rec===R)chRecStop(1);};});
+ rc.onstop=()=>{stopSt();clearInterval(R.tm);const dur=Math.round((Date.now()-R.t0)/1000);const send=R.send;CH.rec=null;chComposer();if(!send)return;if(dur<1){toast('Vocal trop court');return;}const blob=new Blob(ch,{type:R.mt});const ext=/mp4/.test(R.mt)?'m4a':/ogg/.test(R.mt)?'ogg':'webm';chPost({conv:R.conv,kind:'voice',blob,mime:R.mt,ext,dur:Math.min(120,dur),meta:chMeta()});};
  rc.start(250);R.tm=setInterval(()=>{const s=(Date.now()-R.t0)/1000;const el=$('#chRt');if(el)el.textContent=chFmt(s);if(s>=120)chRecStop(1);},250);chComposer();}
-function chRecStop(send){const R=CH.rec;if(!R)return;R.send=send?1:0;try{R.rc.stop();}catch(e){CH.rec=null;chComposer();}}
+function chRecStop(send){const R=CH.rec;if(!R)return;R.send=send?1:0;clearInterval(R.tm);if(!send)try{R.st.getTracks().forEach(t=>t.stop());}catch(e){}else setTimeout(()=>{try{R.st.getTracks().forEach(t=>t.stop());}catch(e){}},1500);try{if(R.rc.state!=='inactive')R.rc.stop();else{CH.rec=null;chComposer();}}catch(e){CH.rec=null;chComposer();}}
+/* libère le micro dès que l'appli passe en arrière-plan (appel, autre appli) */
+function chMicFree(){if(CH.rec){const long=(Date.now()-CH.rec.t0)>1500;chRecStop(0);if(long)toast('Vocal annulé : appli passée en arrière-plan');}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)chMicFree();});window.addEventListener('pagehide',chMicFree);
 
 /* ---- partage RDV / tâche ---- */
 function chShareOpen(){const t=today(),seen=new Set(),rows=[];for(let i=0;i<30;i++){itemsOn(addD(t,i)).forEach(x=>{if(x.k==='bd')return;const k=x.k+x.id;if(seen.has(k))return;seen.add(k);rows.push({k:x.k,id:x.id,t:x.t,d:x.date,tm:x.tm,pl:x.pl,w:x.w});});}
