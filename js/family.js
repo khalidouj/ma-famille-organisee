@@ -468,12 +468,14 @@ async function chUpload(blob,mime,ext){if(SY.exp&&SY.exp-60000<Date.now())await 
  if(!r.ok){let t='';try{t=(await r.json()).message||'';}catch(_){}throw new Error(t||('Envoi du fichier impossible ('+r.status+')'));}
  CH.mc.set(path,Promise.resolve(URL.createObjectURL(blob)));return path;}
 function chMedia(p){if(!CH.mc.has(p))CH.mc.set(p,(async()=>{if(SY.exp&&SY.exp-60000<Date.now())await syRefresh();const r=await fetch(SB.url+'/storage/v1/object/authenticated/chat/'+p,{headers:{apikey:SB.key,Authorization:'Bearer '+SY.at}});if(!r.ok){CH.mc.delete(p);throw new Error('Fichier introuvable');}return URL.createObjectURL(await r.blob());})());return CH.mc.get(p);}
-async function chImgPrep(file){let bmp=null,er=null;
- const ld=()=>new Promise((ok,ko)=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{ok(i);};i.onerror=()=>ko(new Error('format non lisible'));i.src=u;});
- for(const f of [()=>createImageBitmap(file,{imageOrientation:'from-image'}),()=>createImageBitmap(file),ld]){try{bmp=await f();if(bmp&&(bmp.width||bmp.naturalWidth))break;bmp=null;}catch(e){er=e;bmp=null;}}
- if(!bmp)throw er||new Error('décodage impossible');
+async function chImgPrep(file){let bmp=null,er=null,src=file;
+ try{const ab=await file.arrayBuffer();if(!ab.byteLength)throw new Error('fichier vide');src=new Blob([ab],{type:file.type||'image/jpeg'});}catch(e){er=e;}
+ const ld=()=>new Promise((ok,ko)=>{const u=URL.createObjectURL(src),i=new Image();i.onload=()=>ok(i);i.onerror=()=>ko(new Error('format non lisible'));i.src=u;});
+ const sm=async()=>{const t=await createImageBitmap(src);const k=Math.min(1,1280/Math.max(t.width,t.height));if(k>=1)return t;const r=await createImageBitmap(src,{resizeWidth:Math.round(t.width*k),resizeHeight:Math.round(t.height*k),resizeQuality:'medium'});if(t.close)t.close();return r;};
+ for(const f of [()=>createImageBitmap(src,{imageOrientation:'from-image'}),sm,()=>createImageBitmap(src),ld]){try{bmp=await f();if(bmp&&(bmp.width||bmp.naturalWidth))break;bmp=null;}catch(e){er=e;bmp=null;}}
+ if(!bmp){if(src.size&&src.size<=6e6&&/^image\/(jpeg|png|webp)$/.test(src.type))return src;throw er||new Error('décodage impossible');}
  const w=bmp.width||bmp.naturalWidth,h=bmp.height||bmp.naturalHeight,k=Math.min(1,1280/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(bmp,0,0,c.width,c.height);if(bmp.close)try{bmp.close();}catch(e){}
- return await new Promise((ok,ko)=>c.toBlob(b=>b?ok(b):ko(new Error('export JPEG impossible')),'image/jpeg',.72));}
+ const out=await new Promise(ok=>c.toBlob(b=>ok(b),'image/jpeg',.72));if(out)return out;if(src.size&&src.size<=6e6)return src;throw new Error('export JPEG impossible');}
 
 /* ---- affichage d'un message (fil + admin) ---- */
 function chBody(m,mine){if(m.deleted)return '<i class="mini">🚫 Message supprimé</i>';
@@ -583,7 +585,7 @@ function chComposer(){const C=$('#chC');if(!C)return;
  t.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();chSendText();}};
  $('#chS').onclick=()=>{if($('#chS').dataset.m==='s')chSendText();else chRecStart();};
  $('#chA').onclick=()=>{if($('#chMn')){$('#chMn').remove();return;}const m=document.createElement('div');m.id='chMn';m.className='chmenu';m.innerHTML='<button type="button" id="chM1">📷 Photo</button><button type="button" id="chM2">📅 RDV ou tâche</button>';C.appendChild(m);$('#chM1').onclick=()=>{m.remove();$('#chF').click();};$('#chM2').onclick=()=>{m.remove();chShareOpen();};};
- $('#chF').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){toast('Choisis une photo');return;}let blob;try{blob=await chImgPrep(f);}catch(x){toast('Photo illisible ('+String(x&&x.message||x).slice(0,60)+')');return;}try{chPost({conv:CH.conv,kind:'image',blob,mime:'image/jpeg',ext:'jpg'});}catch(x){toast('Envoi impossible : '+String(x&&x.message||x).slice(0,60));}};}
+ $('#chF').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){toast('Choisis une photo');return;}let blob;try{blob=await chImgPrep(f);}catch(x){toast('Photo illisible ('+String(x&&x.message||x).slice(0,60)+')');return;}try{chPost({conv:CH.conv,kind:'image',blob,mime:blob.type||'image/jpeg',ext:(blob.type||'').includes('png')?'png':(blob.type||'').includes('webp')?'webp':'jpg'});}catch(x){toast('Envoi impossible : '+String(x&&x.message||x).slice(0,60));}};}
 
 /* ---- temps réel ---- */
 function chRtStart(){if(!chOn()||CH.ws||CH.stop)return;let ws;try{ws=new WebSocket(SB.url.replace(/^http/,'ws')+'/realtime/v1/websocket?apikey='+SB.key+'&vsn=1.0.0');}catch(e){return;}
