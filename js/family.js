@@ -83,7 +83,7 @@ function viewDash(){const t=today(),od=overdue(),now=items=>items;const todayIte
  const noDate=tks().filter(x=>!x.dn&&!x.d);const open=tks().filter(x=>!x.dn).length;
  setApp(`<div class="banner" style="--c:#3949ab"><h1>${greet()}</h1><div class="mini" style="color:#fff;opacity:.9">${fdate(t,1)} · ${todayItems.length?todayItems.length+' chose'+(todayItems.length>1?'s':'')+' aujourd\'hui':'rien de prévu aujourd\'hui'}</div></div>
  ${instCard()}<div class="row"><button class="btn" id="aEv">📅 + Rendez-vous</button><button class="btn" id="aTk">✅ + Tâche</button></div>
- ${lgDashCard()}
+ ${lgDashCard()}${mmDashCard()}
  ${!fam().length?`<div class="plan"><h3>👪 Commence par ta famille</h3><div class="mini">Ajoute les personnes dont tu gères les rendez-vous, les papiers et les tâches.</div><div class="row"><button class="btn" onclick="quickAddFam()">Ajouter plusieurs personnes d'un coup</button><button class="btn alt" onclick="pForm()">Une seule personne</button></div></div>`:''}
  ${od.length?`<div class="plan" style="border-color:#e53935"><h3>⚠️ En retard (${od.length})</h3>${od.slice(0,6).map(x=>rowHtml({k:'tk',id:x.id,t:x.t,tm:x.tm,w:x.w,date:x.d,it:x},1)).join('')}${od.length>6?`<div class="mini">… et ${od.length-6} autres, dans l'onglet Tâches</div>`:''}</div>`:''}
  <div class="plan"><h3>📌 Aujourd'hui</h3>${todayItems.length?todayItems.map(x=>rowHtml(x)).join(''):'<div class="mini">Rien de prévu. Profites-en ! 🌿</div>'}</div>
@@ -142,7 +142,7 @@ function viewPerson(id){const p=person(id);if(!p)return viewFam();const t=today(
  bindRows($('#app'));$('#pe').onclick=()=>pForm(id);$('#pa').onclick=()=>{evForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};$('#pt').onclick=()=>{tkForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};}
 /* ---- navigation bar ---- */
 const TABS=[['','🏠','Aujourd\'hui'],['cal','📅','Agenda'],['tasks','✅','Tâches'],['fam','👪','Famille'],['etudes','📚','Études']];
-function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const TB=(S.nost?TABS.filter(t=>t[0]!=='etudes'):TABS).concat(S.lg?[['log','🚚','Logistique']]:[]);const cur=['','cal','tasks','fam','etudes','log'].includes(a)?a:(a==='p'||a==='chat'?'fam':['e','exam','review','science','search','code','penal','spirit','today','weak'].includes(a)?'etudes':a==='data'||a==='prayer'||a==='sync'?null:'');
+function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const TB=(S.nost?TABS.filter(t=>t[0]!=='etudes'):TABS).concat(S.lg?[['log','🚚','Logistique']]:[]).concat(S.mm?[['mm','🌸','ركني']]:[]);const cur=['','cal','tasks','fam','etudes','log','mm'].includes(a)?a:(a==='p'||a==='chat'?'fam':['e','exam','review','science','search','code','penal','spirit','today','weak'].includes(a)?'etudes':a==='data'||a==='prayer'||a==='sync'?null:'');
  nav.innerHTML=TB.map(([h,e,l])=>`<button class="tb ${h===cur?'on':''}" onclick="go('${h}')"><span>${e}</span><small>${l}</small></button>`).join('');}
 /* ================= 🚚 LOGISTIQUE (profil Papa) ================= */
 const LG_TIPS=[
@@ -430,6 +430,116 @@ async function lgTipPost(){const t=$('#tpT'),v=(t.value||'').trim();if(v.length<
 function lgBindTips(root){root.querySelectorAll('.lgcb').forEach(b=>b.onclick=()=>{LGS.cat=b.dataset.c;root.querySelectorAll('.lgcb').forEach(x=>x.classList.toggle('on',x===b));});
  const t=root.querySelector('#tpT');if(t){t.addEventListener('input',()=>{const n=root.querySelector('#tpN');if(n)n.textContent=t.value.length+'/600';});}
  const g=root.querySelector('#tpGo');if(g)g.onclick=lgTipPost;lgTipsLoad();}
+/* ================= 🌸 COIN DE MAMAN (100 % arabe) ================= */
+const MM_DUA=[
+["رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ","البقرة ٢٠١"],
+["رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي","طه ٢٥-٢٦"],
+["رَبِّ زِدْنِي عِلْمًا","طه ١١٤"],
+["حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ","آل عمران ١٧٣"],
+["رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا","الفرقان ٧٤"],
+["رَبَّنَا اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ يَوْمَ يَقُومُ الْحِسَابُ","إبراهيم ٤١"],
+["لَا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ","الأنبياء ٨٧"],
+["رَبَّنَا لَا تُؤَاخِذْنَا إِن نَّسِينَا أَوْ أَخْطَأْنَا","البقرة ٢٨٦"],
+["رَبَّنَا تَقَبَّلْ مِنَّا إِنَّكَ أَنتَ السَّمِيعُ الْعَلِيمُ","البقرة ١٢٧"],
+["رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِن لَّدُنكَ رَحْمَةً إِنَّكَ أَنتَ الْوَهَّابُ","آل عمران ٨"],
+["اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ","دعاء"],
+["اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ","دعاء"],
+["يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ","دعاء"],
+["اللَّهُمَّ اغْفِرْ لِي وَارْحَمْنِي وَاهْدِنِي وَعَافِنِي وَارْزُقْنِي","دعاء"]
+];
+const MM_ZK_COMMON=[
+{t:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ",n:1,h:"آية الكرسي"},
+{t:"قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",n:3,h:"سورة الإخلاص"},
+{t:"قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ ۝ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۝ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۝ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",n:3,h:"سورة الفلق"},
+{t:"قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَٰهِ النَّاسِ ۝ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۝ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۝ مِنَ الْجِنَّةِ وَالنَّاسِ",n:3,h:"سورة الناس"}
+];
+const MM_ZK_MORNING=MM_ZK_COMMON.concat([
+{t:"اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ",n:1},
+{t:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",n:1,h:"سيد الاستغفار"},
+{t:"بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",n:3},
+{t:"رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا",n:3},
+{t:"حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",n:7},
+{t:"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",n:10},
+{t:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",n:100},
+{t:"أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",n:100}
+]);
+const MM_ZK_EVENING=MM_ZK_COMMON.concat([
+{t:"اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ",n:1},
+{t:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",n:1,h:"سيد الاستغفار"},
+{t:"بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",n:3},
+{t:"رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا",n:3},
+{t:"حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",n:7},
+{t:"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",n:10},
+{t:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",n:100},
+{t:"أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",n:100}
+]);
+const MM_TS=[["سُبْحَانَ اللَّهِ",33],["الْحَمْدُ لِلَّهِ",33],["اللَّهُ أَكْبَرُ",34],["لَا إِلَٰهَ إِلَّا اللَّهُ",100],["أَسْتَغْفِرُ اللَّهَ",100],["اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",100]];
+const MMS={tab:'',set:null,open:null};
+const mmN=n=>(+n).toLocaleString('ar-MA-u-nu-latn');
+function mmD(){const d=S.mmd=S.mmd&&typeof S.mmd==='object'?S.mmd:{};if(!d.a||d.a.d!==today())d.a={d:today(),k:{},f:{}};if(!d.t||typeof d.t!=='object')d.t={i:0,n:0};return d;}
+const mmSet=()=>MMS.set||(new Date().getHours()<15?'m':'e');
+const mmDua=()=>MM_DUA[((lgDayN()%MM_DUA.length)+MM_DUA.length)%MM_DUA.length];
+function mmDuaCard(compact){const d=mmDua();return `<div class="plan mmc"><h3>🤲 دعاء اليوم</h3><div class="mmq" data-nt>${esc(d[0])}</div><div class="mini" data-nt>${esc(d[1])}</div></div>`;}
+function mmVerse(){const L=REL.filter(r=>{const A=RELAR[r.i];return A&&A.a&&!RELX.has(r.i);});if(!L.length)return '';const r=L[((lgDayN()%L.length)+L.length)%L.length];return `<div class="plan mmc"><h3>📖 تذكرة اليوم</h3><div class="mm-rel" data-nt>${relHtml(r,false)}</div></div>`;}
+function mmHello(){const h=new Date().getHours(),n=(S.me||'').trim();return (h<12?'صباح الخير':h<18?'نهارك سعيد':'مساء الخير')+(n?' يا '+n:'')+' 🌸';}
+function mmDay(){const d=mmD(),set=mmSet(),Z=set==='m'?MM_ZK_MORNING:MM_ZK_EVENING;const done=Z.every((z,i)=>(d.a.k[set+i]||0)>=z.n);
+ return `<div class="plan"><h3>${esc(mmHello())}</h3><div class="mini">${esc(new Date().toLocaleDateString('ar-MA-u-nu-latn',{weekday:'long',day:'numeric',month:'long'}))}</div></div>
+ ${prayerCard()}${mmDuaCard()}
+ <div class="plan" style="cursor:pointer" onclick="go('mm/dhikr')"><h3>${set==='m'?'🌅 أذكار الصباح':'🌙 أذكار المساء'}</h3><div class="mini">${done?'✅ أتممتِها اليوم، تقبّل الله منك':'اضغطي لقراءتها الآن'}</div></div>
+ ${mmVerse()}`;}
+/* ---- أذكار ---- */
+function mmDhikr(){const d=mmD(),set=mmSet(),Z=set==='m'?MM_ZK_MORNING:MM_ZK_EVENING;
+ return `<div class="row mmseg"><button type="button" class="btn ${set==='m'?'':'alt'}" data-set="m">🌅 الصباح</button><button type="button" class="btn ${set==='e'?'':'alt'}" data-set="e">🌙 المساء</button></div>
+ <div class="mini" style="margin:6px 0 10px">اضغطي على كل ذكر بعد قراءته ليُحتسب التكرار.</div>
+ ${Z.map((z,i)=>{const c=Math.min(d.a.k[set+i]||0,z.n),ok=c>=z.n;return `<div class="plan mmz ${ok?'ok':''}" data-i="${i}" role="button" tabindex="0">${z.h?`<div class="mini"><b>${esc(z.h)}</b></div>`:''}<div class="mmq" data-nt>${esc(z.t)}</div><div class="mmcnt">${ok?'✅':''} ${mmN(c)} / ${mmN(z.n)}</div></div>`;}).join('')}
+ <div class="mini" style="margin-top:8px">للتأكد من صحة النصوص راجعي أهل العلم أو مصحفك.</div>`;}
+function mmBindDhikr(root){root.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{MMS.set=b.dataset.set;viewMm('dhikr');});
+ root.querySelectorAll('.mmz').forEach(el=>{const tap=()=>{const d=mmD(),set=mmSet(),Z=set==='m'?MM_ZK_MORNING:MM_ZK_EVENING,i=+el.dataset.i,z=Z[i];const k=set+i;if((d.a.k[k]||0)>=z.n)return;d.a.k[k]=(d.a.k[k]||0)+1;try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
+   const all=Z.every((q,j)=>(d.a.k[set+j]||0)>=q.n);if(all&&!d.a.f[set]){d.a.f[set]=1;toast('تقبّل الله منك 🤲',3500);}save();
+   const c=Math.min(d.a.k[k],z.n),ok=c>=z.n;el.classList.toggle('ok',ok);const ct=el.querySelector('.mmcnt');if(ct)ct.textContent=(ok?'✅ ':'')+mmN(c)+' / '+mmN(z.n);};
+  el.onclick=tap;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tap();}};});}
+/* ---- مسبحة ---- */
+function mmTasbih(){const t=mmD().t,[txt,goal]=MM_TS[t.i]||MM_TS[0];
+ return `<div class="plan" style="text-align:center"><select class="srch" id="tsS" style="font-size:1.1rem">${MM_TS.map((x,i)=>`<option value="${i}" ${i===t.i?'selected':''}>${esc(x[0])}</option>`).join('')}</select>
+ <div class="mmq" style="margin:14px 0" data-nt>${esc(txt)}</div>
+ <button type="button" class="mmtap" id="tsB" aria-label="تسبيح"><span id="tsN">${mmN(t.n)}</span><small>/ ${mmN(goal)}</small></button>
+ <div class="row" style="justify-content:center;margin-top:14px"><button type="button" class="btn alt" id="tsR">🔄 من جديد</button></div></div>`;}
+function mmBindTasbih(root){const t=mmD().t,B=root.querySelector('#tsB');
+ const goalOf=()=>(MM_TS[mmD().t.i]||MM_TS[0])[1];
+ B.onclick=()=>{const q=mmD().t;q.n++;try{navigator.vibrate&&navigator.vibrate(q.n>=goalOf()?[60,40,60]:12);}catch(e){}root.querySelector('#tsN').textContent=mmN(q.n);if(q.n===goalOf())toast('ما شاء الله، أتممتِ العدد 🌟',3000);save();};
+ root.querySelector('#tsR').onclick=()=>{const q=mmD().t;q.n=0;root.querySelector('#tsN').textContent=mmN(0);save();};
+ root.querySelector('#tsS').onchange=e=>{const q=mmD().t;q.i=+e.target.value;q.n=0;save();viewMm('tasbih');};}
+/* ---- وصفات ---- */
+function mmRcHtml(meta,who){const I=(meta.i||[]).map(x=>`<li>${esc(x)}</li>`).join(''),St=(meta.s||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+ return `<div class="mmrc" dir="rtl" data-nt><div class="mini"><b>🍲 وصفة من ${esc(who)}</b></div><div class="mmrt">${esc(meta.t||'')}</div><div class="mini"><b>المقادير</b></div><ul>${I}</ul><div class="mini"><b>الطريقة</b></div><ol>${St}</ol></div>`;}
+function mmRecipes(){if(!SY.fid)return `<div class="plan"><div class="mini">انضمي أولاً إلى عائلتك (تبويب العائلة) لتتمكني من مشاركة وصفاتك.</div></div>`;
+ return `<div class="plan"><h3>🍲 شاركي وصفة مع العائلة</h3><div class="mini" style="margin-bottom:8px">اكتبي وصفتك أو أملِيها بصوتك عبر زر الميكروفون في لوحة المفاتيح. ستصل إلى كل العائلة.</div>
+ <input class="srch" id="rcT" maxlength="60" placeholder="اسم الأكلة (مثال: طاجين بالبرقوق)" dir="auto" style="width:100%">
+ <div class="mini" style="margin-top:8px">المقادير (مقدار في كل سطر)</div><textarea class="srch" id="rcI" rows="5" dir="auto" placeholder="كيلو لحم&#10;٣ بصلات&#10;ملعقة سمن" style="width:100%;resize:vertical"></textarea>
+ <div class="mini" style="margin-top:8px">الطريقة (خطوة في كل سطر)</div><textarea class="srch" id="rcS" rows="6" dir="auto" placeholder="نقطّع اللحم…&#10;نضيف التوابل…" style="width:100%;resize:vertical"></textarea>
+ <div class="row" style="margin-top:8px"><button class="btn" id="rcGo" type="button">📣 مشاركة الوصفة</button></div></div>
+ <div class="plan"><h3>📚 وصفات العائلة</h3><div id="rcL"><div class="mini">جارٍ التحميل…</div></div></div>`;}
+async function mmRcLoad(){const L=$('#rcL');if(!L||!SY.fid)return;if(!CH.ov){try{await chOverview();}catch(e){}}
+ let r;try{r=await sbData('/rest/v1/rpc/chat_recipes',{m:'POST',b:{f:SY.fid}})||[];}catch(e){const L1=$('#rcL');if(L1)L1.innerHTML='<div class="mini">تعذّر تحميل القائمة حالياً.</div>';return;}
+ const L2=$('#rcL');if(!L2)return;
+ L2.innerHTML=r.length?r.map(m=>{const mine=m.sender===chMe(),dt=new Date(m.created_at).toLocaleDateString('ar-MA-u-nu-latn',{day:'numeric',month:'short'}),who=mine?'أنا':chName(m.sender);
+  return `<details class="mmd" data-id="${m.id}"><summary><b data-nt>${esc((m.meta&&m.meta.t)||m.body||'')}</b> <span class="mini" data-nt>· ${esc(who)} · ${esc(dt)}</span></summary>${mmRcHtml(m.meta||{},who)}<div class="row" style="margin-top:6px"><button class="btn alt rcR" type="button">💬 رد</button>${mine?'<button class="btn alt rcD" type="button">🗑️ حذف</button>':''}</div></details>`;}).join(''):'<div class="mini">لا توجد وصفات بعد. كوني أول من يشارك 🌸</div>';
+ L2.querySelectorAll('.mmd').forEach(el=>{const id=+el.dataset.id,rp=el.querySelector('.rcR');if(rp)rp.onclick=()=>go('chat/fam');const d=el.querySelector('.rcD');if(d)d.onclick=async()=>{if(!confirm('حذف هذه الوصفة؟'))return;try{await sbData('/rest/v1/rpc/chat_delete',{m:'POST',b:{mid:id}});toast('تم حذف الوصفة');mmRcLoad();}catch(e){toast(frErr(e.message));}};});}
+async function mmRcPost(){const T=$('#rcT'),I=$('#rcI'),St=$('#rcS');const ln=v=>String(v||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+ const t=(T.value||'').trim().slice(0,60),i=ln(I.value).slice(0,25).map(x=>x.slice(0,100)),s=ln(St.value).slice(0,20).map(x=>x.slice(0,220));
+ if(t.length<2){toast('اكتبي اسم الأكلة');return;}if(!i.length){toast('اكتبي المقادير');return;}if(!s.length){toast('اكتبي طريقة التحضير');return;}
+ const meta={rc:1,t,i,s};if(JSON.stringify(meta).length>2800){toast('الوصفة طويلة جداً، اختصريها قليلاً');return;}
+ const b=$('#rcGo');b.disabled=true;try{await sbData('/rest/v1/rpc/chat_send',{m:'POST',b:{f:SY.fid,to_u:null,k:'text',b:t,m:null,mi:null,d:null,mt:meta}});T.value=I.value=St.value='';toast('تمت مشاركة الوصفة مع العائلة 🍲',3000);mmRcLoad();}
+ catch(e){toast(e&&e.net?'لا يوجد اتصال: أعيدي المحاولة':frErr(e&&e.message));}const b2=$('#rcGo');if(b2)b2.disabled=false;}
+/* ---- vue ---- */
+function viewMm(sub){if(!S.mm){location.hash='';return;}const TB=[['','🏠','اليوم'],['dhikr','📿','الأذكار'],['tasbih','🔢','المسبحة'],['rcp','🍲','الوصفات']];sub=TB.some(t=>t[0]===sub)?sub:'';MMS.tab=sub;
+ const body=sub==='dhikr'?mmDhikr():sub==='tasbih'?mmTasbih():sub==='rcp'?mmRecipes():mmDay();
+ setApp(`<div class="mm" dir="rtl" lang="ar"><div class="banner" style="--c:#ad1457"><h1 data-nt>🌸 ركني</h1><div class="mini" data-nt style="color:#fff;opacity:.9">أذكار، مسبحة ووصفات العائلة</div></div>
+ <div class="tabs lgtabs mmtabs">${TB.map(t=>`<button class="tab ${t[0]===sub?'on':''}" data-s="${t[0]}" type="button"><span class="lgti">${t[1]}</span><span>${t[2]}</span></button>`).join('')}</div>${body}</div>`);
+ const A=$('#app');A.querySelectorAll('.mmtabs .tab').forEach(b=>b.onclick=()=>go(b.dataset.s?'mm/'+b.dataset.s:'mm'));
+ if(sub==='dhikr')mmBindDhikr(A);else if(sub==='tasbih')mmBindTasbih(A);else if(sub==='rcp'){const g=$('#rcGo');if(g){g.onclick=mmRcPost;mmRcLoad();}}}
+function mmDashCard(){if(!S.mm)return '';const d=mmDua(),dd=mmD(),set=mmSet(),Z=set==='m'?MM_ZK_MORNING:MM_ZK_EVENING,done=Z.every((z,i)=>(dd.a.k[set+i]||0)>=z.n);
+ return `<div class="plan mmdash" dir="rtl" onclick="go('mm')" style="cursor:pointer"><h3>🌸 ${esc(mmHello())}</h3><div class="mmq" data-nt>${esc(d[0])}</div><div class="mini" style="margin-top:6px">${set==='m'?'🌅 أذكار الصباح':'🌙 أذكار المساء'} : ${done?'✅':'اضغطي للقراءة'}</div></div>`;}
 /* ---- rappels ---- */
 function fireAt(date,tm,rm){if(rm==='m')return dtm(date,'08:00');const base=dtm(date,tm||'08:00');return new Date(base.getTime()-Number(rm)*60000);}
 function famTick(){try{if(!SY.at||loveOpen||document.querySelector('.fm,.lv-ov'))return;const now=Date.now();S.rf=S.rf||{};
@@ -691,13 +801,13 @@ async function admFam(fid){let r;try{r=await admRpc('admin_family',{f:fid});}cat
 const HJH='bb0c3ca40c41fe006b1e4117548511317ccb665906c1acfea94eeaa51db7a2ca';
 function doLogout(){if(!confirm('Te déconnecter ? Tes données restent sur cet appareil.'))return;const o=$('#acO');if(o)o.remove();const fin=()=>{SY.at=SY.rt='';SY.fid=SY.code=SY.fname='';SY.adm=undefined;SY.st='out';sySave();chStop();syUI();route();};pushDrop().then(fin,fin);}
 function openAccount(){if($('#acO'))return;const d=document.createElement('div');d.className='lv-ov';d.id='acO';
- const typ=(S.stl==='h'?'👩‍🎓 Hajar (études de droit affichées)':S.stl==='o'?'👤 Compte famille':'')+(S.lg?' · 🚚 Logistique':'');
+ const typ=(S.stl==='h'?'👩‍🎓 Hajar (études de droit affichées)':S.stl==='o'?'👤 Compte famille':'')+(S.lg?' · 🚚 Logistique':'')+(S.mm?' · 🌸 Maman':'');
  d.innerHTML=`<div class="lv-card pf" style="text-align:start;padding:18px 16px"><h3 style="margin:0 0 4px">👤 Mon compte</h3>
  <div><b data-nt>${esc(S.me||'—')}</b> <span class="mini" data-nt>${esc(SY.email||'')}</span>${typ?`<div class="mini">${typ}</div>`:''}</div>
  ${SY.at?`<div class="acav"><span id="acAvI">${chAvSpan(chMe(),esc((S.me||'?').trim().charAt(0).toUpperCase()||'?'),chCol(chMe()),'big')}</span><div style="display:grid;gap:6px"><button class="btn alt" id="acAv" type="button">📷 Photo de profil</button>${AV.m[chMe()]?'<button class="btn alt" id="acAvX" type="button">Retirer la photo</button>':''}</div><input type="file" id="acAvF" accept="image/*" hidden></div><div class="acph"><input class="srch" id="acPh" type="tel" inputmode="tel" autocomplete="tel" placeholder="+33 6 12 34 56 78" value="${esc(PH.m[chMe()]||'')}"><button class="btn alt" id="acPhS" type="button">Enregistrer</button></div><div class="mini">📞 Pour que ta famille puisse t’appeler (WhatsApp ou appel). Seuls les membres de ta famille le voient.</div>`:''}
  ${SY.fid?`<div class="mini" style="margin-top:4px">👪 <b data-nt>${esc(SY.fname||'')}</b> · <span style="font-family:monospace;letter-spacing:.08em;user-select:all" data-nt>${esc(SY.code||'')}</span></div>`:'<div class="mini" style="margin-top:4px">👪 Pas encore de famille : va dans l\'onglet « Famille ».</div>'}
  <div class="mini" style="margin:4px 0 10px" data-nt>${esc(syStatTxt())}</div>
- <div class="acg"><button class="btn" id="acSy">🔄 Synchroniser</button>${matchMedia('(display-mode: standalone)').matches?'':'<button class="btn alt" id="acIn">📲 Installer</button>'}<button class="btn alt" id="acHl">❓ Aide</button><button class="btn alt" id="acPw">🔑 Mot de passe</button><button class="btn alt" id="acDt">☁️ Détails synchro</button>${S.stl==='h'?'':'<button class="btn alt" id="acH">👩‍🎓 Je suis Hajar</button>'}<button class="btn alt" id="acLg">${S.lg?'🚚 Retirer le profil Logistique':'🚚 Profil Logistique (Papa)'}</button>${SY.adm||SY.email===OWNER?'<button class="btn alt" id="acAd">🛠️ Admin</button>':''}<button class="btn alt" id="acWp">🧹 Effacer cet appareil</button><button class="btn alt" id="acDel" style="color:#c62828">🗑️ Supprimer mon compte</button></div>
+ <div class="acg"><button class="btn" id="acSy">🔄 Synchroniser</button>${matchMedia('(display-mode: standalone)').matches?'':'<button class="btn alt" id="acIn">📲 Installer</button>'}<button class="btn alt" id="acHl">❓ Aide</button><button class="btn alt" id="acPw">🔑 Mot de passe</button><button class="btn alt" id="acDt">☁️ Détails synchro</button>${S.stl==='h'?'':'<button class="btn alt" id="acH">👩‍🎓 Je suis Hajar</button>'}<button class="btn alt" id="acLg">${S.lg?'🚚 Retirer le profil Logistique':'🚚 Profil Logistique (Papa)'}</button><button class="btn alt" id="acMm">${S.mm?'🌸 Retirer le profil Maman':'🌸 Profil Maman'}</button>${SY.adm||SY.email===OWNER?'<button class="btn alt" id="acAd">🛠️ Admin</button>':''}<button class="btn alt" id="acWp">🧹 Effacer cet appareil</button><button class="btn alt" id="acDel" style="color:#c62828">🗑️ Supprimer mon compte</button></div>
  <div class="acg" style="margin-top:8px"><button class="btn alt" id="acOut" style="color:#c62828">🚪 Me déconnecter</button><button class="btn" id="acX">Fermer</button></div></div>`;
  document.body.appendChild(d);const c=()=>d.remove();d.onclick=e=>{if(e.target===d)c();};$('#acX',d).onclick=c;
  $('#acSy',d).onclick=()=>{syncNow();toast('Synchronisation…');c();};$('#acDt',d).onclick=()=>{c();go('sync');};$('#acPw',d).onclick=()=>{c();pwForm();};$('#acHl',d).onclick=()=>{c();openHelp();};$('#acOut',d).onclick=doLogout;$('#acDel',d).onclick=deleteMyAccount;
@@ -708,6 +818,7 @@ function openAccount(){if($('#acO'))return;const d=document.createElement('div')
  const ins=$('#acIn',d);if(ins)ins.onclick=()=>{if(DEFER){c();doInstall();}else toast(/iphone|ipad/i.test(navigator.userAgent)?(/crios|fxios|edgios|opios/i.test(navigator.userAgent)?'Ouvre ce lien dans Safari, puis touche Partager et « Sur l’écran d’accueil »':'Touche Partager puis « Sur l’écran d’accueil »'):'Menu ⋮ du navigateur, puis « Installer l’application »',6000);};
  const h=$('#acH',d);if(h)h.onclick=async()=>{const k=(prompt('Code de vérification')||'').trim();if(!k)return;if((await sha256(k))!==HJH){toast('Code de vérification incorrect.');return;}S.stl='h';S.nost=0;S.nsa=0;save();c();langApply();renderTabs((location.hash.slice(1).split('/')[0])||'');route();toast('Compte Hajar activé ✅');};
  const lg=$('#acLg',d);if(lg)lg.onclick=()=>{if(S.lg){if(!confirm('Retirer l’onglet Logistique de ce compte ?'))return;S.lg=0;}else S.lg=1;save();c();langApply();renderTabs((location.hash.slice(1).split('/')[0])||'');if(S.lg){go('log');toast('Profil Logistique activé 🚚');}else{go('');toast('Profil Logistique retiré');route();}};
+ const mmb=$('#acMm',d);if(mmb)mmb.onclick=()=>{const tb=()=>renderTabs((location.hash.slice(1).split('/')[0])||'');if(S.mm){if(!confirm('Retirer l’onglet Maman de ce compte ?'))return;S.mm=0;save();c();langApply();tb();go('');toast('Profil Maman retiré');route();return;}S.mm=1;S.fs=Math.max(S.fs||100,115);save();c();if(!isAr())setLang('ar');applyPrefs();tb();go('mm');toast('تم تفعيل ملف ماما 🌸');};
  const o2=$('#acO2',d);if(o2)o2.onclick=()=>{if(!confirm('Compte famille : la partie études et les messages personnels seront masqués. Continuer ?'))return;S.stl='o';S.nost=1;S.nsa=0;save();c();langApply();renderTabs('');route();};}
 /* mot de passe : oublié / changer */
 function pwForm(tok,rt,exp,rec){const d=document.createElement('div');d.className='lv-ov';d.id='pwO';
@@ -785,6 +896,7 @@ function chBody(m,mine){if(m.deleted)return '<i class="mini">🚫 Message suppri
  if(m.kind==='voice'){const d=m.dur||0;return `<div class="cva" data-id="${m.id}" data-p="${esc(m.media||'')}" data-l="${m.local||''}" data-d="${d}"><button class="cvp" type="button">▶️</button><input class="cvr" type="range" min="0" max="${Math.max(1,d*10)}" value="0"><span class="cvt">${chFmt(d)}</span><button class="cvx" type="button">${CHA.sp}×</button></div>`;}
  if(m.kind==='image')return `<img class="chi" data-p="${esc(m.media||'')}" data-l="${m.local||''}" alt="Photo">`;
  if(m.kind==='share'){const x=m.meta||{},ev=x.k!=='tk',have=(ev?evs():tks()).some(i=>i.id===x.id);return `<div class="chsh"><b data-nt>${ev?'📅':'✅'} ${esc(x.t||'')}</b><div class="mini" data-nt>${[x.d?fdate(x.d,1):'',x.tm,x.pl].filter(Boolean).map(esc).join(' · ')}${x.who?'<br>'+esc(x.who):''}</div><div class="row" style="margin-top:6px"><button class="btn alt chso" type="button" data-id="${m.id}">Ouvrir</button>${have?'':`<button class="btn chsa" type="button" data-id="${m.id}">➕ Ajouter</button>`}</div></div>`;}
+ if(m.meta&&m.meta.rc)return mmRcHtml(m.meta,m.sender===chMe()?'أنا':chName(m.sender));
  if(m.meta&&m.meta.tip){const c=lgCatOf(m.meta.c);return `<div class="chtip" data-nt><div class="mini"><b>💡 ${esc(LGL('Astuce de','نصيحة من'))} ${esc(m.sender===chMe()?LGL('moi','أنا'):chName(m.sender))}</b> · ${c[1]} ${esc(isAr()?c[2].a:c[2].f)}</div><span dir="auto">${esc(m.body||'')}</span></div>`;}
  return `<span dir="auto" data-nt>${esc(m.body||'')}</span>`;}
 function chHydrate(root){root.querySelectorAll('img.chi[data-p]').forEach(im=>{if(im.dataset.ok)return;const p=im.dataset.p,l=im.dataset.l;im.dataset.ok=1;if(l){im.src=l;return;}if(!p)return;chMedia(p).then(u=>{im.src=u;}).catch(()=>{im.alt='📷 Photo introuvable';});});}
@@ -1015,6 +1127,7 @@ ARP.push(['(\\d+) personnes?','{1} شخص']);
 ARP.push(["(.+?) a ajouté un rendez-vous : (.+)", "موعد جديد من {1} : {2}"],["(.+?) a ajouté une tâche : (.+)", "مهمة جديدة من {1} : {2}"],["Aujourd'hui : (\\d+) à faire", "اليوم : {1} مهام"],["Demain : (\\d+) à prévoir", "غداً : {1} مهام"],["(\\d+) en retard", "{1} متأخرة"]);
 Object.assign(AR,{"Mon numéro : +33 6 12 34 56 78":"رقمي: ‎+33 6 12 34 56 78","Enregistrer":"حفظ","Annuler":"إلغاء","Appel normal":"مكالمة عادية","📞 Appel normal":"📞 مكالمة عادية","📞 Pour que ta famille puisse t’appeler (WhatsApp ou appel). Seuls les membres de ta famille le voient.":"📞 ليتمكن أفراد عائلتك من الاتصال بك (واتساب أو مكالمة). لا يراه إلا أفراد عائلتك.","Numéro enregistré ✅":"تم حفظ الرقم ✅","Numéro retiré":"تم حذف الرقم","Numéro invalide : écris-le avec l’indicatif, ex. +33 6 12 34 56 78":"رقم غير صحيح: اكتبه مع رمز البلد، مثال ‎+33 6 12 34 56 78"});
 Object.assign(AR,{"Logistique":"اللوجستيك","🚚 Profil Logistique (Papa)":"🚚 ملف اللوجستيك (بابا)","🚚 Retirer le profil Logistique":"🚚 إزالة ملف اللوجستيك","Retirer l’onglet Logistique de ce compte ?":"إزالة تبويب اللوجستيك من هذا الحساب؟","Profil Logistique activé 🚚":"تم تفعيل ملف اللوجستيك 🚚","Profil Logistique retiré":"تمت إزالة ملف اللوجستيك"});
+Object.assign(AR,{"🌸 Profil Maman":"🌸 ملف ماما","🌸 Retirer le profil Maman":"🌸 إزالة ملف ماما","Retirer l’onglet Maman de ce compte ?":"إزالة تبويب ماما من هذا الحساب؟","Profil Maman retiré":"تمت إزالة ملف ماما"});
 Object.assign(AR,{"Agenda, tâches, prière et famille : tout au même endroit.": "الأجندة والمهام والصلاة والعائلة: كل شيء في مكان واحد.", "Connecté": "متصل", "📲 Installer l'application": "📲 تثبيت التطبيق", "Installer l'application": "تثبيت التطبيق", "Ajoute Ma famille à ton écran d'accueil : elle s'ouvre comme une vraie appli, sans te reconnecter.": "أضف «عائلتي» إلى شاشتك الرئيسية: يفتح مثل تطبيق حقيقي دون إعادة تسجيل الدخول.", "Installer": "تثبيت", "Plus tard": "لاحقاً", "Touche Partager puis « Sur l’écran d’accueil »": "اضغط على مشاركة ثم «إضافة إلى الشاشة الرئيسية»", "Menu ⋮ du navigateur, puis « Installer l’application »": "من قائمة ⋮ في المتصفح اختر «تثبيت التطبيق»", "Notifications": "الإشعارات", "Aucune notification pour l'instant.": "لا توجد إشعارات حالياً.", "Activer sur le téléphone": "تفعيل على الهاتف", "Vider": "مسح الكل", "Fermer": "إغلاق", "Notifications activées ✅": "تم تفعيل الإشعارات ✅", "Notifications refusées": "تم رفض الإشعارات", "Rejoins ta famille": "انضم إلى عائلتك", "Entre le code reçu : tu retrouves tout de suite ta famille, ses rendez-vous et ses tâches.": "أدخل الرمز الذي وصلك: ستجد عائلتك ومواعيدها ومهامها فوراً.", "Code de la famille": "رمز العائلة", "Rejoindre": "انضمام", "Pas de code ? Créer une nouvelle famille": "ليس لديك رمز؟ أنشئ عائلة جديدة", "Notre famille": "عائلتنا", "Créer": "إنشاء", "Entre le code.": "أدخل الرمز.", "Famille rejointe ✅": "تم الانضمام إلى العائلة ✅", "Famille créée ✅": "تم إنشاء العائلة ✅", "Code copié": "تم نسخ الرمز", "Message copié": "تم نسخ الرسالة", "Code à donner pour inviter quelqu’un :": "الرمز الذي تعطيه لمن تريد دعوته:", "Copier le code": "نسخ الرمز", "Envoyer": "إرسال", "Adhan": "الأذان", "Choisis l'adhan qui se jouera à l'heure de la prière (quand l'appli est ouverte). Pour le Fajr, la version avec « Aş-şalât khayrun mina n-nawm » est utilisée.": "اختر الأذان الذي سيُرفع عند وقت الصلاة (عندما يكون التطبيق مفتوحاً). في الفجر تُستعمل النسخة التي فيها «الصلاة خير من النوم».", "Choisir": "اختيار", "✅ Choisi": "✅ تم الاختيار", "Aucun (silencieux)": "بدون (صامت)", "Mon propre fichier": "ملفي الخاص", "chargé ✅": "تم التحميل ✅", "Stop": "إيقاف", "Adhan enregistré ✅": "تم حفظ الأذان ✅", "Connexion nécessaire pour télécharger l'adhan": "يلزم الاتصال بالإنترنت لتحميل الأذان", "Lecture impossible : vérifie ta connexion": "تعذّر التشغيل: تحقق من اتصالك", "Volume :": "مستوى الصوت :"});
 Object.assign(AR,{"✅ Passer en méthode France (UOIF 12°/12°)": "✅ اعتماد طريقة فرنسا (UOIF 12°/12°)", "Méthode France activée ✅": "تم تفعيل طريقة فرنسا ✅"});
 Object.assign(AR,{"Discussions": "المحادثات", "Écrire, envoyer un vocal ou une photo à la famille": "اكتب أو أرسل رسالة صوتية أو صورة للعائلة", "En direct · vocaux · photos": "مباشر · رسائل صوتية · صور", "Les messages sont visibles uniquement par la famille.": "الرسائل مرئية فقط للعائلة.", "Toute la famille": "كل العائلة", "Conversations à deux": "محادثات ثنائية", "Aucun message": "لا توجد رسائل", "Aucun message pour l'instant.": "لا توجد رسائل بعد.", "Écris le premier": "اكتب أول رسالة", "Écrire un message…": "اكتب رسالة…", "Messages plus anciens": "رسائل أقدم", "↑ Messages plus anciens": "↑ رسائل أقدم", "Moi": "أنا", "Hier": "أمس", "Photo": "صورة", "Message vocal": "رسالة صوتية", "RDV ou tâche": "موعد أو مهمة", "Partager un rendez-vous ou une tâche": "مشاركة موعد أو مهمة", "Rien à partager pour le moment.": "لا شيء للمشاركة حاليًا.", "Copier": "نسخ", "Supprimer pour tous": "حذف للجميع", "Message supprimé": "تم حذف الرسالة", "Tâche partagée": "مهمة مشتركة", "RDV partagé": "موعد مشترك", "Ouvrir": "فتح", "Enregistrement…": "جارٍ التسجيل…", "Non envoyé · réessayer": "لم تُرسل · أعد المحاولة", "Rejoins d'abord une famille pour pouvoir discuter avec elle.": "انضم أولًا إلى عائلة لتتمكن من التحدث معها.", "Rejoindre une famille": "الانضمام إلى عائلة", "Vocal trop court": "الرسالة الصوتية قصيرة جدًا", "Micro refusé : autorise-le dans les réglages du site": "تم رفض الميكروفون: اسمح به من إعدادات الموقع", "Vocal non disponible sur ce navigateur": "الرسائل الصوتية غير متاحة في هذا المتصفح", "Pas de connexion : touche « réessayer »": "لا يوجد اتصال: اضغط «أعد المحاولة»", "Photo illisible": "تعذّرت قراءة الصورة", "Choisis une photo": "اختر صورة", "Vocal introuvable": "الرسالة الصوتية غير موجودة", "Ajouté ✅": "تمت الإضافة ✅", "Options": "خيارات", "Joindre": "إرفاق"});
