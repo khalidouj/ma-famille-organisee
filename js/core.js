@@ -104,6 +104,7 @@ function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,
  if(a==='cal')return viewCal();
  if(a==='tasks')return viewTasks();
  if(a==='chat')return viewChat(b||'');
+ if(a==='log')return viewLog(b||'');
  if(a==='fam')return viewFam();
  if(a==='p')return viewPerson(b);
  if(a==='etudes')return viewHome();
