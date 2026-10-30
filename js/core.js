@@ -90,7 +90,9 @@ function dailySet(n=15){const all=allQuestions();const due=shuffle(all.filter(x=
 /* ---------- router ---------- */
 function go(h){location.hash=h;}
 window.addEventListener('hashchange',route);
-function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,c]=h.split('/');const _g=!SY.at;document.body.classList.toggle('gate',_g);document.body.classList.toggle('chth',a==='chat'&&!!b);if(a!=='chat'&&CH.conv)chLeave();if(_g)return viewGate();if(S.stl==='o'&&['e','exam','review','science','search','code','penal','today','weak','etudes'].includes(a)){location.hash='';return;}document.body.classList.toggle('study',['e','exam','review','science','search','code','penal','spirit','today','weak','etudes'].includes(a));renderTabs(a||'');
+function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,c]=h.split('/');const _g=!SY.at;document.body.classList.toggle('gate',_g);document.body.classList.toggle('chth',a==='chat'&&!!b);if(a!=='chat'&&CH.conv)chLeave();try{fabUpdate();}catch(e){}if(_g)return viewGate();if(S.stl==='o'&&['e','exam','review','science','search','code','penal','today','weak','etudes'].includes(a)){location.hash='';return;}document.body.classList.toggle('study',['e','exam','review','science','search','code','penal','spirit','today','weak','etudes'].includes(a));renderTabs(a||'');try{hdAv();}catch(e){}
+ if(a==='more')return viewMore();
+ if(a==='me')return viewMe(b||'');
  if(a==='e')return viewEtape(+b,c||'palais');
  if(a==='exam')return viewExam();
  if(a==='review')return viewReview();

@@ -8,14 +8,14 @@ function viewHome(){setTimeout(bindPlan,0);
   <p>Droit pénal · ton cours complet, transformé en <b>aventure à mémoriser</b>.</p>
   <p class="mini" style="color:#fff;opacity:.9">🏁 Avancement total : <b>${overall()}%</b></p>
   <p class="mini" style="color:#fff;opacity:.8">8 étapes · ${stats} questions · palais mental · flashcards · révision espacée · examen type barreau</p>
-  <div class="row">
-   <button class="btn" onclick="go('today')">▶️ Ma session du jour</button>
-   <button class="btn ghost" onclick="go('review')">🔁 Révision espacée (${due})</button>
-   <button class="btn ghost" onclick="go('exam')">🏛️ Examen barreau</button>
-   <button class="btn ghost" onclick="go('science')">🔬 La science de la mémoire</button>
-   <button class="btn ghost" onclick="go('search')">🔎 Chercher dans le cours</button>
-   <button class="btn ghost" onclick="go('code')">📚 Code civil</button>
-   <button class="btn ghost" onclick="go('penal')">⚖️ Code pénal</button>
+  <div class="row"><button class="btn" onclick="go('today')">▶️ Ma session du jour</button></div>
+  <div class="stg">
+   <button class="stt" onclick="go('review')"><span>🔁</span><b>Révision</b><small>${due} à revoir</small></button>
+   <button class="stt" onclick="go('exam')"><span>🏛️</span><b>Examen</b><small>type barreau</small></button>
+   <button class="stt" onclick="go('science')"><span>🔬</span><b>Mémoire</b><small>la science</small></button>
+   <button class="stt" onclick="go('search')"><span>🔎</span><b>Chercher</b><small>dans le cours</small></button>
+   <button class="stt" onclick="go('code')"><span>📚</span><b>Code civil</b></button>
+   <button class="stt" onclick="go('penal')"><span>⚖️</span><b>Code pénal</b></button>
   </div></div>
   ${prayerCard()}
   ${planCard()}
@@ -24,7 +24,7 @@ function viewHome(){setTimeout(bindPlan,0);
     <span class="n">${e.n}</span><div class="em">${e.emoji}</div><h3>${esc(e.title)}</h3><div class="mini">${esc(e.pages)}</div>
     <div class="ring" title="Avancement : palais + cours + flashcards + quiz" style="--p:${progress(e)}"><span>${progress(e)}%</span></div>${(()=>{const p=parts(e);const f=x=>Math.round(100*x);return `<div class="pm"><span>🧠 ${f(p.p)}%</span><span>📖 ${f(p.c)}%</span>${p.f===null?'':`<span>🃏 ${f(p.f)}%</span>`}<span>🎯 ${f(p.q)}%</span></div>`;})()}</div>`).join('')}
    <div class="st" style="--c:#b71c1c;animation-delay:600ms" onclick="go('exam')"><span class="n">G</span><div class="em">🏛️</div><h3>QCM global type barreau</h3><div class="mini">8 cas pratiques + questions mixtes</div></div></div>
-  <p style="text-align:center;margin-top:20px"><button class="btn alt" onclick="go('data')">💾 Ma sauvegarde</button> <button class="btn" id="instBtn" style="display:none" onclick="doInstall()">📲 Installer l'appli</button></p>
+  <p style="text-align:center;margin-top:20px"><button class="btn" id="instBtn" style="display:none" onclick="doInstall()">📲 Installer l'appli</button></p>
   <h2>🎯 Le truc pour retenir</h2>
   <div class="grid2">
    <div class="card"><b>1. Palais mental</b><br>Chaque étape est une pièce. Clique les objets : un fait = une image.</div>
