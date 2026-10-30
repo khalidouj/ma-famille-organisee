@@ -1,8 +1,9 @@
-const CACHE='gp-88d8efab4a';
+const CACHE='gp-14cd7d9da5';
 const ASSETS=["./", "index.html", "css/style.css", "manifest.webmanifest", "js/data-course.js", "js/data-civil.js", "js/data-penal.js", "js/core.js", "js/views.js", "js/planning.js", "js/prayer.js", "js/family.js", "js/codes.js", "js/fx.js", "js/love.js", "js/init.js", "icons/badge-96.png", "icons/monochrome-512.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE&&k.startsWith('gp-')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting();});
-self.addEventListener('notificationclick',e=>{e.notification.close();e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>{for(const c of l){if('focus' in c)return c.focus();}return self.clients.openWindow('./');}));});
+self.addEventListener('push',e=>{let d={};try{d=e.data.json();}catch(_){}e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>{if(l.some(c=>c.visibilityState==='visible'))return;return self.registration.showNotification(d.title||'Ma famille',{body:d.body||'',icon:'icons/icon-192.png',badge:'icons/badge-96.png',tag:d.tag||'msg',renotify:true,data:{url:d.url||''}});}));});
+self.addEventListener('notificationclick',e=>{e.notification.close();const u=((e.notification.data&&e.notification.data.url)||'').replace(/^#/,'');e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>{for(const c of l){if('focus' in c){c.postMessage({go:u});return c.focus();}}return self.clients.openWindow('./'+(u?'#'+u:''));}));});
 self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET'||new URL(r.url).origin!==location.origin)return;
  e.respondWith(caches.match(r,{ignoreSearch:true}).then(m=>m||fetch(r).then(res=>{if(res.ok){const cp=res.clone();caches.open(CACHE).then(c=>c.put(r,cp));}return res;}).catch(()=>r.mode==='navigate'?caches.match('index.html'):Response.error())));});

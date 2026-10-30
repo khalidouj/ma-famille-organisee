@@ -76,6 +76,6 @@ function viewPrayer(){const nx=pnext(),t=ptoday(0),c=pcfg();
  const mf=$('#mfr');if(mf)mf.onclick=()=>{S.pl={...c,m:'uoif'};save();viewPrayer();toast('Méthode France activée ✅');};
  $('#mth').onchange=e=>{S.pl={...c,m:e.target.value};save();viewPrayer();};
  $('#ppt').onclick=()=>{S.pp=S.pp===0?1:0;save();viewPrayer();};
- $('#pnt').onclick=()=>{if(!window.Notification){toast('Non disponible sur ce navigateur');return;}Notification.requestPermission().then(p=>{S.pn=p==='granted'?1:0;save();toast(p==='granted'?'Notifications activées ✅':'Notifications refusées');});};
+ $('#pnt').onclick=()=>{if(!window.Notification){toast('Non disponible sur ce navigateur');return;}Notification.requestPermission().then(p=>{S.pn=p==='granted'?1:0;save();if(p==='granted')pushInit(1);toast(p==='granted'?'Notifications activées ✅':'Notifications refusées');});};
  $('#geo').onclick=()=>{const st=$('#geos');if(!navigator.geolocation){st.textContent='Position indisponible : choisis ta ville.';return;}st.textContent='Recherche…';
   navigator.geolocation.getCurrentPosition(p=>{S.pl={lat:+p.coords.latitude.toFixed(4),lon:+p.coords.longitude.toFixed(4),name:'Ma position',m:c.m||'uoif'};save();viewPrayer();toast('Position enregistrée ✅');},er=>{st.textContent='Position refusée ou indisponible : choisis ta ville dans la liste.';},{timeout:12000,maximumAge:3600000});};}
