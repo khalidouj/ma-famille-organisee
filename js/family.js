@@ -484,7 +484,7 @@ function mmVerse(){const L=REL.filter(r=>{const A=RELAR[r.i];return A&&A.a&&!REL
 function mmHello(){const h=new Date().getHours(),n=(S.me||'').trim();return (h<12?'صباح الخير':h<18?'نهارك سعيد':'مساء الخير')+(n?' يا '+n:'')+' 🌸';}
 function mmDay(){const d=mmD(),set=mmSet(),Z=set==='m'?MM_ZK_MORNING:MM_ZK_EVENING;const done=Z.every((z,i)=>(d.a.k[set+i]||0)>=z.n);
  return `<div class="plan"><h3>${esc(mmHello())}</h3><div class="mini">${esc(new Date().toLocaleDateString('ar-MA-u-nu-latn',{weekday:'long',day:'numeric',month:'long'}))}</div></div>
- ${prayerCard()}${mmDuaCard()}
+ ${prayerCard()}${mmDuaCard()}${mmWordCard()}
  <div class="plan" style="cursor:pointer" onclick="go('mm/dhikr')"><h3>${set==='m'?'🌅 أذكار الصباح':'🌙 أذكار المساء'}</h3><div class="mini">${done?'✅ أتممتِها اليوم، تقبّل الله منك':'اضغطي لقراءتها الآن'}</div></div>
  ${mmVerse()}`;}
 /* ---- أذكار ---- */
@@ -532,14 +532,73 @@ async function mmRcPost(){const T=$('#rcT'),I=$('#rcI'),St=$('#rcS');const ln=v=
  const b=$('#rcGo');b.disabled=true;try{await sbData('/rest/v1/rpc/chat_send',{m:'POST',b:{f:SY.fid,to_u:null,k:'text',b:t,m:null,mi:null,d:null,mt:meta}});T.value=I.value=St.value='';toast('تمت مشاركة الوصفة مع العائلة 🍲',3000);mmRcLoad();}
  catch(e){toast(e&&e.net?'لا يوجد اتصال: أعيدي المحاولة':frErr(e&&e.message));}const b2=$('#rcGo');if(b2)b2.disabled=false;}
 /* ---- vue ---- */
-function viewMm(sub){if(!S.mm){location.hash='';return;}const TB=[['','🏠','اليوم'],['dhikr','📿','الأذكار'],['tasbih','🔢','المسبحة'],['rcp','🍲','الوصفات']];sub=TB.some(t=>t[0]===sub)?sub:'';MMS.tab=sub;
- const body=sub==='dhikr'?mmDhikr():sub==='tasbih'?mmTasbih():sub==='rcp'?mmRecipes():mmDay();
+function viewMm(sub,extra){if(!S.mm){location.hash='';return;}const TB=[['','🏠','اليوم'],['dhikr','📿','الأذكار'],['tasbih','🔢','المسبحة'],['fr','🇫🇷','الفرنسية'],['rcp','🍲','الوصفات']];sub=TB.some(t=>t[0]===sub)?sub:'';MMS.tab=sub;
+ const body=sub==='dhikr'?mmDhikr():sub==='tasbih'?mmTasbih():sub==='fr'?mmFr(extra||''):sub==='rcp'?mmRecipes():mmDay();
  setApp(`<div class="mm" dir="rtl" lang="ar"><div class="banner" style="--c:#ad1457"><h1 data-nt>🌸 ركني</h1><div class="mini" data-nt style="color:#fff;opacity:.9">أذكار، مسبحة ووصفات العائلة</div></div>
  <div class="tabs lgtabs mmtabs">${TB.map(t=>`<button class="tab ${t[0]===sub?'on':''}" data-s="${t[0]}" type="button"><span class="lgti">${t[1]}</span><span>${t[2]}</span></button>`).join('')}</div>${body}</div>`);
  const A=$('#app');A.querySelectorAll('.mmtabs .tab').forEach(b=>b.onclick=()=>go(b.dataset.s?'mm/'+b.dataset.s:'mm'));
- if(sub==='dhikr')mmBindDhikr(A);else if(sub==='tasbih')mmBindTasbih(A);else if(sub==='rcp'){const g=$('#rcGo');if(g){g.onclick=mmRcPost;mmRcLoad();}}}
+ if(sub==='dhikr')mmBindDhikr(A);else if(sub==='tasbih')mmBindTasbih(A);else if(sub==='fr')mmBindFr(A,extra||'');else if(!sub){const ws=$('#wdSay');if(ws)ws.onclick=()=>mmSay(mmWordToday()[0]);}else if(sub==='rcp'){const g=$('#rcGo');if(g){g.onclick=mmRcPost;mmRcLoad();}}}
 function mmDashCard(){if(!S.mm)return '';const d=mmDua(),dd=mmD(),set=mmSet(),Z=set==='m'?MM_ZK_MORNING:MM_ZK_EVENING,done=Z.every((z,i)=>(dd.a.k[set+i]||0)>=z.n);
  return `<div class="plan mmdash" dir="rtl" onclick="go('mm')" style="cursor:pointer"><h3>🌸 ${esc(mmHello())}</h3><div class="mmq" data-nt>${esc(d[0])}</div><div class="mini" style="margin-top:6px">${set==='m'?'🌅 أذكار الصباح':'🌙 أذكار المساء'} : ${done?'✅':'اضغطي للقراءة'}</div></div>`;}
+/* ---- 🇫🇷 تعلّم الفرنسية خطوة بخطوة (pour Maman) ---- */
+const MM_FR=[
+{id:'hi',ic:'👋',ar:'التحيات',fr:'Les salutations',w:[
+["Bonjour","صباح الخير / مرحباً (في النهار)","بونجور"],["Bonsoir","مساء الخير","بونسوار"],["Salut","سلام (بين الأصدقاء والعائلة)","سالي"],["Au revoir","إلى اللقاء","أورڤوار"],["Merci","شكراً","ميرسي"],["S'il vous plaît","من فضلك","سيل ڤو بليه"],["Excusez-moi","المعذرة / عفواً","إكسكيزيه موا"],["Comment allez-vous ?","كيف حالك؟","كومان تاليه ڤو"],["Je vais bien, merci","أنا بخير، شكراً","جو ڤيه بيان، ميرسي"],["Enchantée","تشرّفت بمعرفتك (امرأة تقولها)","انشانتيه"]]},
+{id:'me',ic:'🙋‍♀️',ar:'أعرّف بنفسي',fr:'Se présenter',w:[
+["Je m'appelle…","اسمي…","جو مابيل"],["Comment vous appelez-vous ?","ما اسمك؟","كومان ڤو زابليه ڤو"],["Je suis marocaine","أنا مغربية","جو سوي ماروكين"],["J'habite à…","أسكن في…","جابيت آ"],["Oui","نعم","ويي"],["Non","لا","نون"],["Je ne comprends pas","لا أفهم","جو نو كونبران با"],["Parlez lentement, s'il vous plaît","تكلّم ببطء من فضلك","بارليه لانتمان، سيل ڤو بليه"],["Pouvez-vous répéter ?","هل يمكنك أن تعيد؟","بوڤيه ڤو ريبيتيه"],["Je parle un peu français","أتكلم قليلاً من الفرنسية","جو بارل أون بو فرانسيه"]]},
+{id:'nb',ic:'🔢',ar:'الأرقام',fr:'Les nombres',w:[
+["Un","١ — واحد","أون"],["Deux","٢ — اثنان","دو"],["Trois","٣ — ثلاثة","تروا"],["Quatre","٤ — أربعة","كاتر"],["Cinq","٥ — خمسة","سانك"],["Six","٦ — ستة","سيس"],["Sept","٧ — سبعة","سيت"],["Huit","٨ — ثمانية","ويت"],["Neuf","٩ — تسعة","نوف"],["Dix","١٠ — عشرة","ديس"]]},
+{id:'fa',ic:'👨‍👩‍👧',ar:'العائلة',fr:'La famille',w:[
+["La famille","العائلة","لا فاميي"],["Mon mari","زوجي","مون ماري"],["Ma fille","ابنتي","ما فيي"],["Mon fils","ابني","مون فيس"],["Mes enfants","أولادي","ميز انفان"],["Mon gendre","زوج ابنتي (صهري)","مون جاندر"],["Mes petits-enfants","أحفادي","مي بوتي زانفان"],["Ma sœur","أختي","ما سور"],["Mon frère","أخي","مون فرير"],["Ma maison","بيتي","ما ميزون"]]},
+{id:'fd',ic:'🍞',ar:'الأكل والمشروبات',fr:'À table',w:[
+["Le pain","الخبز","لو بان"],["L'eau","الماء","لو"],["Le lait","الحليب","لو ليه"],["La viande","اللحم","لا ڤيياند"],["Le poulet","الدجاج","لو بوليه"],["Les légumes","الخضر","ليه ليڭيم"],["Le thé","الشاي","لو تيه"],["Le sel","الملح","لو سيل"],["Le sucre","السكر","لو سيكر"],["J'ai faim","أنا جائعة","جيه فان"],["J'ai soif","أنا عطشانة","جيه سواف"]]},
+{id:'sh',ic:'🛒',ar:'في السوق والمتجر',fr:'Au magasin',w:[
+["Combien ça coûte ?","بكم هذا؟","كونبيان سا كوت"],["C'est trop cher","هذا غالٍ جداً","سي ترو شير"],["Je voudrais…","أريد…","جو ڤودريه"],["Un kilo de…","كيلوغرام من…","أون كيلو دو"],["Avez-vous… ?","هل عندكم…؟","أڤيه ڤو"],["Je prends ça","سآخذ هذا","جو بران سا"],["Où est la caisse ?","أين الصندوق (الدفع)؟","أو إي لا كيس"],["Je paie par carte","أدفع بالبطاقة","جو بيه بار كارت"],["En espèces","نقداً","آن إسبيس"],["Le ticket, s'il vous plaît","الوصل من فضلك","لو تيكيه، سيل ڤو بليه"]]},
+{id:'dr',ic:'🩺',ar:'عند الطبيب والصيدلية',fr:'Chez le médecin',w:[
+["J'ai mal à la tête","عندي ألم في الرأس","جيه مال آ لا تيت"],["J'ai mal au ventre","عندي ألم في البطن","جيه مال أو ڤانتر"],["J'ai de la fièvre","عندي حمّى","جيه دو لا فييڤر"],["Je ne me sens pas bien","لا أشعر أنني بخير","جو نو مو سان با بيان"],["Le médecin","الطبيب","لو ميدسان"],["La pharmacie","الصيدلية","لا فارماسي"],["Un médicament","دواء","أون ميديكامان"],["Une ordonnance","وصفة طبية","أون أوردونانس"],["C'est urgent","الأمر مستعجل","سي تورجان"],["Appelez une ambulance","اتصلوا بالإسعاف","أبليه أون أنبيلانس"],["Au secours !","النجدة!","أو سوكور"]]},
+{id:'ct',ic:'🧭',ar:'في الطريق والمواصلات',fr:'En ville',w:[
+["Où est… ?","أين…؟","أو إي"],["À gauche","يساراً","آ ڭوش"],["À droite","يميناً","آ دروات"],["Tout droit","إلى الأمام مباشرة","تو دروا"],["La gare","المحطة","لا ڭار"],["L'arrêt de bus","موقف الحافلة","لاريه دو بيس"],["Je suis perdue","أنا تائهة","جو سوي بيردي"],["C'est loin ?","هل هو بعيد؟","سي لوان"],["C'est près d'ici","إنه قريب من هنا","سي بري ديسي"],["Un billet, s'il vous plaît","تذكرة من فضلك","أون بييه، سيل ڤو بليه"]]},
+{id:'dy',ic:'📅',ar:'الأيام والوقت',fr:'Les jours',w:[
+["Lundi","الاثنين","لوندي"],["Mardi","الثلاثاء","ماردي"],["Mercredi","الأربعاء","ميركرودي"],["Jeudi","الخميس","جودي"],["Vendredi","الجمعة","ڤانردي"],["Samedi","السبت","سامدي"],["Dimanche","الأحد","ديمانش"],["Aujourd'hui","اليوم","أوجوردوي"],["Demain","غداً","دومان"],["Hier","أمس","إيير"]]}
+];
+const mmCanSay=()=>typeof speechSynthesis!=='undefined'&&typeof SpeechSynthesisUtterance!=='undefined';
+function mmSay(t,slow){if(!mmCanSay()){toast('الصوت غير متاح على هذا الهاتف');return;}try{const u=new SpeechSynthesisUtterance(String(t).replace(/…/g,'').replace(/\s+/g,' '));u.lang='fr-FR';u.rate=slow?0.6:0.85;const v=(speechSynthesis.getVoices()||[]).find(x=>/^fr/i.test(x.lang));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){toast('الصوت غير متاح على هذا الهاتف');}}
+const mmFrAll=()=>[].concat(...MM_FR.map(l=>l.w.map(w=>({l:l.id,w}))));
+function mmFrStars(id){const f=(mmD().fr=mmD().fr||{});return f[id]||0;}
+function mmWordToday(){const a=mmFrAll();return a[((lgDayN()%a.length)+a.length)%a.length].w;}
+function mmWordCard(){const w=mmWordToday();return `<div class="plan mmc"><h3>🇫🇷 كلمة اليوم</h3><div class="mmfr" dir="ltr">${esc(w[0])}</div><div class="mmpr">${esc(w[2])}</div><div class="mmq" style="font-size:1.1rem" data-nt>${esc(w[1])}</div>${mmCanSay()?'<div class="row" style="margin-top:8px"><button class="btn alt" type="button" id="wdSay">🔊 استمعي</button></div>':''}<div class="mini" style="margin-top:8px;cursor:pointer" onclick="go(\'mm/fr\')">اضغطي هنا لتتعلمي المزيد ←</div></div>`;}
+function mmFrList(){const done=MM_FR.filter(l=>mmFrStars(l.id)>0).length;
+ return `<div class="plan"><h3>🇫🇷 تعلّمي الفرنسية خطوة بخطوة</h3><div class="mini">درس صغير كل يوم يكفي. استمعي، كرّري، ثم جرّبي الاختبار. أنهيتِ ${mmN(done)} من ${mmN(MM_FR.length)} دروس.</div></div>
+ ${MM_FR.map((l,i)=>{const s=mmFrStars(l.id);return `<div class="plan mmles" data-l="${l.id}" role="button" tabindex="0"><div class="mmlh"><span class="mmli">${l.ic}</span><div style="flex:1"><div><b>${mmN(i+1)}. ${esc(l.ar)}</b></div><div class="mini" dir="ltr" style="text-align:start">${esc(l.fr)} · ${mmN(l.w.length)} عبارات</div></div><div class="mmst">${'⭐'.repeat(s)}${'☆'.repeat(3-s)}</div></div></div>`;}).join('')}`;}
+function mmLesson(id){const l=MM_FR.find(x=>x.id===id);if(!l)return mmFrList();
+ return `<div class="row" style="margin:6px 0"><button class="btn alt" type="button" id="frBk">→ الدروس</button><span class="sp"></span>${mmCanSay()?'<button class="btn alt" type="button" id="frSl">🐢 ببطء</button>':''}</div>
+ <div class="plan"><h3>${l.ic} ${esc(l.ar)}</h3><div class="mini" dir="ltr" style="text-align:start;margin:-4px 0 6px">${esc(l.fr)}</div><div class="mini">اضغطي على 🔊 للاستماع ثم كرّري بصوت عالٍ. الأحرف العربية تحت الكلمة تساعدك على النطق.</div></div>
+ ${l.w.map((w,i)=>`<div class="plan mmw"><div class="mmwr"><div style="flex:1"><div class="mmfr" dir="ltr">${esc(w[0])}</div><div class="mmpr">${esc(w[2])}</div><div class="mmq" style="font-size:1.1rem" data-nt>${esc(w[1])}</div></div>${mmCanSay()?`<button type="button" class="mmsay" data-i="${i}" aria-label="استماع">🔊</button>`:''}</div></div>`).join('')}
+ <div class="row" style="margin:12px 0"><button class="btn" type="button" id="frQz">📝 ابدئي الاختبار</button></div>${mmCanSay()?'':'<div class="mini">ملاحظة: النطق الصوتي غير متاح في هذا المتصفح.</div>'}`;}
+/* quiz */
+function mmQzMake(id){const l=MM_FR.find(x=>x.id===id),pool=l.w.slice().sort(()=>Math.random()-.5),pick=pool.slice(0,5),can=mmCanSay();
+ return {l:id,i:0,sc:0,a:null,qs:pick.map((w,k)=>{const t=can&&k%2===1?'b':'a';const others=l.w.filter(x=>x!==w).sort(()=>Math.random()-.5).slice(0,3);const opts=others.concat([w]).sort(()=>Math.random()-.5);return {t,w,opts};})};}
+function mmQzHtml(){const q=MMS.qz,l=MM_FR.find(x=>x.id===q.l);
+ if(q.i>=q.qs.length){const s=q.sc>=5?3:q.sc>=4?2:q.sc>=3?1:0;return `<div class="plan" style="text-align:center"><h3>🏁 النتيجة</h3><div style="font-size:2rem">${'⭐'.repeat(s)}${'☆'.repeat(3-s)}</div><div class="mmq">${mmN(q.sc)} / ${mmN(q.qs.length)}</div><div class="mini">${s===3?'ما شاء الله! ممتاز 🌟':s>=1?'أحسنتِ! أعيدي الدرس لتحصلي على نجوم أكثر.':'لا بأس، أعيدي الدرس ثم جرّبي من جديد 💪'}</div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn" type="button" id="qzAg">🔄 إعادة</button><button class="btn alt" type="button" id="qzBk">← الدرس</button></div></div>`;}
+ const Q=q.qs[q.i],w=Q.w;
+ const prompt=Q.t==='a'?`<div class="mmfr" dir="ltr" style="text-align:center">${esc(w[0])}</div>${mmCanSay()?'<div style="text-align:center"><button type="button" class="mmsay" id="qzPl">🔊</button></div>':''}<div class="mmq" style="text-align:center;font-size:1.1rem">ما معناها؟</div>`:`<div style="text-align:center"><button type="button" class="mmsay mmbig" id="qzPl">🔊</button></div><div class="mmq" style="text-align:center;font-size:1.1rem">ماذا سمعتِ؟</div>`;
+ return `<div class="plan"><div class="mini">${l.ic} ${esc(l.ar)} · السؤال ${mmN(q.i+1)} / ${mmN(q.qs.length)}</div>${prompt}<div class="lgq">${Q.opts.map((o,j)=>{let cls='btn alt lgo';if(q.a!==null){if(o===w)cls='btn lgo lgok';else if(j===q.a)cls='btn alt lgo lgko';}return `<button type="button" class="${cls}" data-o="${j}" ${q.a!==null?'disabled':''} ${Q.t==='b'?'dir="ltr"':''}>${esc(Q.t==='a'?o[1]:o[0])}</button>`;}).join('')}</div>
+ ${q.a!==null?`<div class="mini lgex" style="margin-top:8px">${Q.opts[q.a]===w?'✅ أحسنتِ!':'❌ الجواب:'} <b dir="ltr">${esc(w[0])}</b> = ${esc(w[1])}</div><div class="row" style="margin-top:8px"><button class="btn" type="button" id="qzNx">${q.i+1>=q.qs.length?'النتيجة':'التالي'} ←</button></div>`:''}</div>`;}
+function mmQzDraw(){const h=$('#frBody');if(!h)return;h.innerHTML=mmQzHtml();mmQzBind(h);}
+function mmQzBind(h){const q=MMS.qz;if(!q)return;
+ const pl=h.querySelector('#qzPl');if(pl&&q.i<q.qs.length)pl.onclick=()=>mmSay(q.qs[q.i].w[0]);
+ h.querySelectorAll('.lgo[data-o]').forEach(b=>b.onclick=()=>{if(q.a!==null)return;const Q=q.qs[q.i];q.a=+b.dataset.o;if(Q.opts[q.a]===Q.w)q.sc++;mmQzDraw();});
+ const nx=h.querySelector('#qzNx');if(nx)nx.onclick=()=>{q.i++;q.a=null;if(q.i>=q.qs.length){const s=q.sc>=5?3:q.sc>=4?2:q.sc>=3?1:0,f=(mmD().fr=mmD().fr||{});if(s>(f[q.l]||0)){f[q.l]=s;}else if(!(q.l in f))f[q.l]=0;save();}mmQzDraw();if(q.i<q.qs.length&&q.qs[q.i].t==='b')setTimeout(()=>mmSay(q.qs[q.i].w[0]),250);};
+ const ag=h.querySelector('#qzAg');if(ag)ag.onclick=()=>{MMS.qz=mmQzMake(q.l);mmQzDraw();if(MMS.qz.qs[0].t==='b')setTimeout(()=>mmSay(MMS.qz.qs[0].w[0]),250);};
+ const bk=h.querySelector('#qzBk');if(bk)bk.onclick=()=>{MMS.qz=null;viewMm('fr',q.l);};}
+function mmFr(extra){if(MM_FR.some(l=>l.id===extra))return `<div id="frBody">${MMS.qz&&MMS.qz.l===extra?mmQzHtml():mmLesson(extra)}</div>`;MMS.qz=null;return mmFrList();}
+function mmBindFr(root,extra){const l=MM_FR.find(x=>x.id===extra);
+ if(!l){root.querySelectorAll('.mmles').forEach(el=>{const open=()=>go('mm/fr/'+el.dataset.l);el.onclick=open;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};});return;}
+ if(MMS.qz&&MMS.qz.l===extra){mmQzBind(root.querySelector('#frBody'));return;}
+ let slow=false;const sl=root.querySelector('#frSl');if(sl)sl.onclick=()=>{slow=!slow;sl.classList.toggle('alt',!slow);sl.textContent=slow?'🐢 ببطء ✓':'🐢 ببطء';};
+ root.querySelectorAll('.mmsay[data-i]').forEach(b=>b.onclick=()=>mmSay(l.w[+b.dataset.i][0],slow));
+ root.querySelector('#frBk').onclick=()=>go('mm/fr');
+ root.querySelector('#frQz').onclick=()=>{MMS.qz=mmQzMake(extra);const b=$('#frBody');b.innerHTML=mmQzHtml();mmQzBind(b);if(MMS.qz.qs[0].t==='b')setTimeout(()=>mmSay(MMS.qz.qs[0].w[0]),250);};}
 /* ---- rappels ---- */
 function fireAt(date,tm,rm){if(rm==='m')return dtm(date,'08:00');const base=dtm(date,tm||'08:00');return new Date(base.getTime()-Number(rm)*60000);}
 function famTick(){try{if(!SY.at||loveOpen||document.querySelector('.fm,.lv-ov'))return;const now=Date.now();S.rf=S.rf||{};
