@@ -1340,7 +1340,7 @@ async function deleteMyAccount(){if(!confirm('Supprimer définitivement ton comp
  const o=$('#acO');if(o)o.remove();SY.at=SY.rt='';SY.uid='';SY.email='';await resetUserData();SY.st='out';sySave();syUI();route();toast('Compte supprimé');}
 /* ---------- CHAT (discussions, vocaux, photos, partage) + PUSH ---------- */
 const VAPID_PUB='BD9xSq-d2OxumjW5VcmadY0YxKXO9UqnC4WdniSZL9msqU35lAotDdwUKg_sSFvK83dSf6Vb-zjjE0hp1Sm6Md4';
-const CH={ov:null,conv:'',msgs:[],rx:{},ws:null,wsOk:0,tp:{},mc:new Map(),rm:{},more:0,n:0,pushOn:0,poll:null,rec:null,sh:0,sn:{},re:null,nfs:{}};
+const CH={ov:null,conv:'',msgs:[],rx:{},ws:null,wsOk:0,tp:{},mc:new Map(),rm:{},more:0,n:0,pushOn:0,poll:null,rec:null,sh:0,sn:{},re:null,nfs:{},ed:null,pn:{},pi:0,jumped:0,rn:null};
 const CHA={a:null,id:'',sp:1};
 const CHE=['❤️','👍','😂','🙏','😮','🤲'];
 const chOn=()=>!!(SY.at&&SY.fid);
@@ -1348,7 +1348,7 @@ const chMe=()=>SY.uid;
 const chMem=()=>(CH.ov&&CH.ov.members)||[];
 const chName=id=>{if(id===chMe())return 'Moi';const m=chMem().find(x=>x.id===id);return m?m.name:'…';};
 const chConvOf=r=>!r.to_user?'fam':(r.sender===chMe()?r.to_user:r.sender);
-const chPrev=m=>m.deleted?trS('🚫 Message supprimé'):m.kind==='voice'?trS('🎤 Message vocal'):m.kind==='image'?trS('📷 Photo'):m.kind==='share'?(m.meta&&m.meta.k==='tk'?trS('✅ Tâche partagée'):trS('📅 RDV partagé')):String(m.body||'').replace(/\s+/g,' ');
+const chPrev=m=>m.deleted?trS('🚫 Message supprimé'):(m.meta&&Array.isArray(m.meta.poll))?'📊 '+String(m.body||''):m.kind==='voice'?trS('🎤 Message vocal'):m.kind==='image'?trS('📷 Photo'):m.kind==='share'?(m.meta&&m.meta.k==='tk'?trS('✅ Tâche partagée'):trS('📅 RDV partagé')):String(m.body||'').replace(/\s+/g,' ');
 const chCol=id=>{let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))%360;return `hsl(${h} 55% 42%)`;};
 const chUnread=()=>CH.ov?CH.ov.convs.reduce((a,c)=>a+(c.unread||0),0):0;
 const chFmt=s=>{const m=Math.max(0,Math.round(s||0));return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');};
@@ -1363,9 +1363,9 @@ async function chFetch(conv,opt){opt=opt||{};let q='/rest/v1/messages?select=*&f
  const r=await sbData(q)||[];return opt.after?r:r.reverse();}
 async function chFetchRx(ids){if(!ids.length)return;const r=await sbData('/rest/v1/msg_reactions?select=msg_id,user_id,emoji&msg_id=in.('+ids.join(',')+')')||[];const o={};ids.forEach(i=>o[i]=[]);r.forEach(x=>o[x.msg_id].push({u:x.user_id,e:x.emoji}));Object.assign(CH.rx,o);}
 const chReal=()=>CH.msgs.filter(x=>!x.tmp);
-async function chLoad(conv){CH.err='';try{const rows=await chFetch(conv);if(CH.conv!==conv)return;CH.msgs=rows;CH.more=rows.length>=40?1:0;await chFetchRx(rows.map(x=>x.id));}catch(e){if(CH.conv===conv){CH.err=frErr(e.message)||'Erreur';toast(CH.err,4500);}}if(CH.conv!==conv)return;chSeen();chRender(1);chRead();}
+async function chLoad(conv){CH.err='';CH.jumped=0;CH.rn=null;try{const rows=await chFetch(conv);if(CH.conv!==conv)return;CH.msgs=rows;CH.more=rows.length>=40?1:0;await chFetchRx(rows.map(x=>x.id));}catch(e){if(CH.conv===conv){CH.err=frErr(e.message)||'Erreur';toast(CH.err,4500);}}if(CH.conv!==conv)return;chSeen();chRender(1);chRead();chLoadPins(conv);}
 async function chOlder(){const f=chReal()[0];if(!f)return;try{const rows=await chFetch(CH.conv,{before:f.id});CH.more=rows.length>=40?1:0;await chFetchRx(rows.map(x=>x.id));CH.msgs=rows.concat(CH.msgs);chRender(0,1);}catch(e){toast(frErr(e.message));}}
-async function chPoll(){if(!CH.conv||document.hidden||!chOn())return;if(!CH.wsOk)chSeen();try{const l=chReal();const last=l.length?l[l.length-1].id:0;const rows=await chFetch(CH.conv,{after:last});let ch=0;if(rows.length){await chFetchRx(rows.map(x=>x.id));rows.forEach(r=>{if(!CH.msgs.some(x=>x.id===r.id)){CH.msgs.push(r);ch=1;}});}
+async function chPoll(){if(!CH.conv||document.hidden||!chOn()||CH.jumped)return;if(!CH.wsOk)chSeen();try{const l=chReal();const last=l.length?l[l.length-1].id:0;const rows=await chFetch(CH.conv,{after:last});let ch=0;if(rows.length){await chFetchRx(rows.map(x=>x.id));rows.forEach(r=>{if(!CH.msgs.some(x=>x.id===r.id)){CH.msgs.push(r);ch=1;}});}
   const ids=chReal().slice(-40).map(x=>x.id),before=JSON.stringify(ids.map(i=>CH.rx[i]||[]));await chFetchRx(ids);if(before!==JSON.stringify(ids.map(i=>CH.rx[i]||[])))ch=1;
   if(ch){chRender(1);chRead();}}catch(e){}}
 function chRead(){if(!CH.conv||document.hidden)return;const real=chReal();const last=real.length?real[real.length-1].id:0;const c=CH.ov&&CH.ov.convs.find(x=>x.conv===CH.conv);
@@ -1392,6 +1392,7 @@ function chBody(m,mine){if(m.deleted)return '<i class="mini">🚫 Message suppri
  if(m.kind==='voice'){const d=m.dur||0;return `<div class="cva" data-id="${m.id}" data-p="${esc(m.media||'')}" data-l="${m.local||''}" data-d="${d}"><button class="cvp" type="button">▶️</button><input class="cvr" type="range" min="0" max="${Math.max(1,d*10)}" value="0"><span class="cvt">${chFmt(d)}</span><button class="cvx" type="button">${CHA.sp}×</button></div>`;}
  if(m.kind==='image')return `<img class="chi" data-p="${esc(m.media||'')}" data-l="${m.local||''}" alt="Photo">`;
  if(m.kind==='share'){const x=m.meta||{},ev=x.k!=='tk',have=(ev?evs():tks()).some(i=>i.id===x.id);return `<div class="chsh"><b data-nt>${ev?'📅':'✅'} ${esc(x.t||'')}</b><div class="mini" data-nt>${[x.d?fdate(x.d,1):'',x.tm,x.pl].filter(Boolean).map(esc).join(' · ')}${x.who?'<br>'+esc(x.who):''}</div><div class="row" style="margin-top:6px"><button class="btn alt chso" type="button" data-id="${m.id}">Ouvrir</button>${have?'':`<button class="btn chsa" type="button" data-id="${m.id}">➕ Ajouter</button>`}</div></div>`;}
+ if(chIsPoll(m))return chPollHtml(m);
  if(m.meta&&m.meta.rc)return mmRcHtml(m.meta,m.sender===chMe()?'أنا':chName(m.sender));
  if(m.meta&&m.meta.tip){const c=lgCatOf(m.meta.c);return `<div class="chtip" data-nt><div class="mini"><b>💡 ${esc(LGL('Astuce de','نصيحة من'))} ${esc(m.sender===chMe()?LGL('moi','أنا'):chName(m.sender))}</b> · ${c[1]} ${esc(isAr()?c[2].a:c[2].f)}</div><span dir="auto">${esc(m.body||'')}</span></div>`;}
  return `<span dir="auto" data-nt>${esc(m.body||'')}</span>`;}
@@ -1413,27 +1414,7 @@ function chBindMedia(root){root.addEventListener('click',e=>{const t=e.target;
 
 /* ---- le fil ---- */
 function chDay(d){const t=today(),k=ld(d);if(k===t)return "Aujourd'hui";if(k===addD(t,-1))return 'Hier';return fdate(k,1);}
-function chRender(bottom,keep){const L=$('#chL');if(!L)return;const near=L.scrollHeight-L.scrollTop-L.clientHeight<140;CH.stick=!!(bottom||near);const h0=L.scrollHeight;let html='',day='',fam=CH.conv==='fam';
- if(CH.more)html+='<button class="btn alt" id="chOl" type="button" style="align-self:center;margin:6px">↑ Messages plus anciens</button>';
- if(CH.err&&!CH.msgs.length)html+=`<div class="mini" style="text-align:center;margin:30px 10px">⚠️ Impossible de charger les messages.<div style="margin-top:6px" data-nt>${esc(CH.err)}</div><button class="btn" id="chRl" type="button" style="margin-top:10px">Réessayer</button></div>`;else if(!CH.msgs.length)html+=`<div class="mini" style="text-align:center;margin:30px 10px">Aucun message pour l'instant.<br>Écris le premier 👋</div>`;
- let lm=null;for(let j=CH.msgs.length-1;j>=0;j--){const x=CH.msgs[j];if(x.sender===chMe()&&!x.tmp&&!x.deleted){lm=x.id;break;}}
- CH.msgs.forEach((m,i)=>{const d=new Date(m.created_at),dk=ld(d);if(dk!==day){day=dk;html+=`<div class="chd">${chDay(d)}</div>`;}
-  const mine=m.sender===chMe(),p=CH.msgs[i-1],first=!p||p.sender!==m.sender||ld(new Date(p.created_at))!==dk;
-  const rx=(CH.rx[m.id]||[]),g={};rx.forEach(r=>{g[r.e]=g[r.e]||{n:0,me:0};g[r.e].n++;if(r.u===chMe())g[r.e].me=1;});
-  const pills=Object.entries(g).map(([e,v])=>`<button class="chrx ${v.me?'on':''}" type="button" data-id="${m.id}" data-e="${e}">${e}${v.n>1?' '+v.n:''}</button>`).join('');
-  const tk=chTk(m,m.id===lm);const st=m.tmp?(m.st==='f'?'<button class="chrt" type="button" data-id="'+m.id+'">⚠️ Non envoyé · réessayer</button>':'⏳'):'';
-  html+=`<div class="chm ${mine?'me':'th'}" data-id="${m.id}">${!mine&&fam&&first?`<div class="chn" data-nt style="color:${chCol(m.sender)}">${chAvSpan(m.sender,chIni(m.sender),chCol(m.sender),'xs')}${esc(chName(m.sender))}</div>`:''}<div class="chb ${m.kind}">${chQuote(m)}${chBody(m,mine)}</div>${pills?`<div class="chr">${pills}</div>`:''}<div class="cht"><span>${hhmm(d)}</span>${tk}${st}${m.tmp||m.deleted?'':`<button class="chmn" type="button" data-id="${m.id}" aria-label="Options">⋯</button>`}</div></div>`;});
- L.innerHTML=html;chHydrate(L);chAudUI();
- if(bottom||near)L.scrollTop=L.scrollHeight;else if(keep){CH.stick=false;L.scrollTop=L.scrollHeight-h0;}
- const ty=$('#chTy');if(ty)chTypUI();}
 function chTypUI(){const ty=$('#chTy');if(!ty)return;const now=Date.now(),who=Object.entries(CH.tp).filter(([u,t])=>now-t<4500&&(CH.conv==='fam'||u===CH.conv)).map(([u])=>chName(u));ty.textContent=who.length?(who[0]+(isAr()?' يكتب…':' écrit…')):'';}
-function chSheet(id){const m=CH.msgs.find(x=>String(x.id)===String(id));if(!m||m.tmp)return;const mine=m.sender===chMe();const d=document.createElement('div');d.className='lv-ov chsh2';
- d.innerHTML=`<div class="lv-card" style="padding:14px;max-width:340px"><div class="chem">${CHE.map(e=>`<button type="button" data-e="${e}">${e}</button>`).join('')}</div><div style="display:grid;gap:8px;margin-top:10px">${m.deleted?'':'<button class="btn alt" id="shRe" type="button">↩️ Répondre</button>'}${m.kind==='text'?'<button class="btn alt" id="shCp" type="button">📋 Copier</button>':''}${mine?'<button class="btn alt" id="shDl" type="button" style="color:#c62828">🗑️ Supprimer pour tous</button>':''}<button class="btn" id="shX" type="button">Fermer</button></div></div>`;
- document.body.appendChild(d);const close=()=>d.remove();d.onclick=e=>{if(e.target===d)close();};$('#shX',d).onclick=close;
- d.querySelectorAll('.chem button').forEach(b=>b.onclick=()=>{close();chReact(m.id,b.dataset.e);});
- const re=$('#shRe',d);if(re)re.onclick=()=>{close();CH.re={id:m.id,s:m.sender,k:m.kind,t:chRePrev(m)};chReUI();};
- const cp=$('#shCp',d);if(cp)cp.onclick=()=>{try{navigator.clipboard.writeText(m.body||'');toast('Copié');}catch(e){toast('Copie impossible');}close();};
- const dl=$('#shDl',d);if(dl)dl.onclick=async()=>{close();if(!confirm('Supprimer ce message pour tout le monde ?'))return;try{await sbData('/rest/v1/rpc/chat_delete',{m:'POST',b:{mid:m.id}});m.deleted=true;m.body=null;m.meta=null;chRender();}catch(e){toast(frErr(e.message));}};}
 async function chReact(id,e){const rx=CH.rx[id]=CH.rx[id]||[];const me=chMe(),i=rx.findIndex(r=>r.u===me),same=i>=0&&rx[i].e===e;if(same)rx.splice(i,1);else if(i>=0)rx[i].e=e;else rx.push({u:me,e});chRender();
  try{await sbData('/rest/v1/rpc/chat_react',{m:'POST',b:{mid:id,e}});}catch(x){toast(frErr(x.message));chPoll();}}
 
@@ -1447,16 +1428,9 @@ function chOnRead(p){if(!p||!p.u||!p.c)return;const me=chMe(),last=Number(p.last
  const mine=p.c==='fam'?CH.conv==='fam':(p.c===me&&CH.conv===p.u);
  if(mine){CH.sn[p.u]=Math.max(CH.sn[p.u]||0,last);chRender();}}
 async function chSeen(){if(!CH.conv||!chOn())return;const conv=CH.conv;try{const r=await sbData('/rest/v1/rpc/chat_seen',{m:'POST',b:{f:SY.fid,c:conv}})||[];if(CH.conv!==conv)return;const o={};r.forEach(x=>{o[x.u]=Number(x.last)||0;});if(JSON.stringify(o)!==JSON.stringify(CH.sn)){CH.sn=o;chRender();}}catch(e){}}
-function chTk(m,isLast){if(m.sender!==chMe()||m.tmp||m.deleted)return '';const me=chMe(),fam=CH.conv==='fam';const ids=fam?chMem().filter(x=>x.id!==me).map(x=>x.id):[CH.conv];if(!ids.length)return '';
- const seen=ids.filter(u=>(CH.sn[u]||0)>=m.id),some=seen.length>0,all=seen.length===ids.length;
- let h=`<span class="chk${all?' on':''}" aria-hidden="true">${some?'✓✓':'✓'}</span>`;
- if(isLast&&some){const ar=isAr();h+=`<span data-nt>${fam?(all?(ar?'شاهدها الجميع':'Vu par tous'):(ar?'شاهدها ':'Vu par ')+esc(seen.map(u=>chName(u)).join(', '))):(ar?'شوهدت':'Vu')}</span>`;}
- return h;}
-const chRePrev=m=>m.kind==='voice'?'🎤 Message vocal':m.kind==='image'?'📷 Photo':m.kind==='share'?(m.meta&&m.meta.k==='tk'?'✅ Tâche partagée':'📅 RDV partagé'):String(m.body||'').replace(/\s+/g,' ').slice(0,80);
+const chRePrev=m=>(m.meta&&Array.isArray(m.meta.poll))?'📊 '+String(m.body||'').slice(0,80):m.kind==='voice'?'🎤 Message vocal':m.kind==='image'?'📷 Photo':m.kind==='share'?(m.meta&&m.meta.k==='tk'?'✅ Tâche partagée':'📅 RDV partagé'):String(m.body||'').replace(/\s+/g,' ').slice(0,80);
 const chReWho=s=>s===chMe()?(isAr()?'أنت':'Toi'):chName(s);
 function chMeta(extra){const m=Object.assign({},extra||{});if(CH.re){m.re=CH.re;CH.re=null;chReUI();}return Object.keys(m).length?m:null;}
-function chReUI(){const R=$('#chRq');if(!R)return;const q=CH.re;if(!q){R.innerHTML='';R.style.display='none';return;}R.style.display='flex';
- R.innerHTML=`<div class="chq2"><b data-nt>${esc(chReWho(q.s))}</b><span data-nt>${q.k==='text'?esc(q.t):esc(trS(q.t))}</span></div><button type="button" id="chRqX" aria-label="Annuler">✕</button>`;$('#chRqX').onclick=()=>{CH.re=null;chReUI();};const t=$('#chT');if(t)t.focus();}
 function chQuote(m){const q=m.meta&&m.meta.re;if(!q||m.deleted)return '';const o=CH.msgs.find(x=>String(x.id)===String(q.id));const gone=o&&o.deleted;
  const tx=gone?esc(trS('🚫 Message supprimé')):q.k==='text'?esc(String(q.t||'')):esc(trS(String(q.t||'')));
  return `<div class="chq" data-q="${esc(q.id)}"><b data-nt>${esc(chReWho(q.s))}</b><span data-nt>${tx}</span></div>`;}
@@ -1493,14 +1467,13 @@ async function chCallOpen(conv){let q=PH.m[conv];if(!q){await phSync(1);q=PH.m[c
 
 /* ---- envoi ---- */
 function chPost(o){const tmp={id:'t'+(++CH.n),tmp:1,st:'p',sender:chMe(),to_user:o.conv==='fam'?null:o.conv,kind:o.kind,body:o.body||null,media:o.media||null,mime:o.mime||null,dur:o.dur||null,meta:o.meta||null,created_at:new Date().toISOString(),_o:o};
- if(o.blob)tmp.local=URL.createObjectURL(o.blob);CH.msgs.push(tmp);if(CH.conv===o.conv)chRender(1);chSend(tmp);}
+ if(o.blob)tmp.local=URL.createObjectURL(o.blob);if(CH.jumped&&CH.conv===o.conv){CH.jumped=0;CH.msgs=CH.msgs.filter(x=>x.tmp);}CH.msgs.push(tmp);if(CH.conv===o.conv)chRender(1);chSend(tmp);}
 async function chSend(tmp){const o=tmp._o;tmp.st='p';try{if(o.blob&&!o.media)o.media=await chUpload(o.blob,o.mime,o.ext);
   const id=await sbData('/rest/v1/rpc/chat_send',{m:'POST',b:{f:SY.fid,to_u:o.conv==='fam'?null:o.conv,k:o.kind,b:o.body||null,m:o.media||null,mi:o.mime||null,d:o.dur||null,mt:o.meta||null}});
-  const i=CH.msgs.indexOf(tmp);if(CH.msgs.some(x=>x.id===id)){if(i>=0)CH.msgs.splice(i,1);}else if(i>=0){Object.assign(tmp,{id,tmp:0,st:'',media:o.media});delete tmp._o;}
+  const i=CH.msgs.indexOf(tmp);if(CH.msgs.some(x=>x.id===id)){if(i>=0)CH.msgs.splice(i,1);}else if(i>=0){Object.assign(tmp,{id,tmp:0,st:'',media:o.media});delete tmp._o;if(CH.rn)CH.rn.add(id);}
   if(CH.ov){const c=CH.ov.convs.find(x=>x.conv===o.conv);const l={id,kind:o.kind,body:(o.body||'').slice(0,80),sender:chMe(),deleted:false,created_at:new Date().toISOString()};if(c)c.last=l;else CH.ov.convs.push({conv:o.conv,last:l,unread:0});}
  }catch(e){tmp.st='f';if(e.net)toast('Pas de connexion : touche « réessayer »');else toast(frErr(e.message));}
  if(CH.conv===o.conv)chRender();}
-function chSendText(){const t=$('#chT');if(!t)return;const v=t.value.trim();if(!v)return;t.value='';t.style.height='auto';chSendBtn();chPost({conv:CH.conv,kind:'text',body:v.slice(0,2000),meta:chMeta()});}
 function chSendBtn(){const t=$('#chT'),b=$('#chS');if(!t||!b)return;b.textContent=t.value.trim()?'➤':'🎤';b.dataset.m=t.value.trim()?'s':'r';}
 function chTyping(){const now=Date.now();if(now-(CH.lt||0)<2500||!CH.ws||!CH.wsOk)return;CH.lt=now;try{CH.ws.send(JSON.stringify({topic:'realtime:chat-'+SY.fid,event:'broadcast',payload:{type:'broadcast',event:'typing',payload:{u:chMe(),c:CH.conv==='fam'?'fam':CH.conv}},ref:String(++CH.n)}));}catch(_){}}
 
@@ -1532,39 +1505,157 @@ function chShareAdd(m){const x=m.meta||{};const o={id:uid(),t:x.t||'',d:x.d||'',
 
 /* ---- écrans ---- */
 function chTitle(c){return c==='fam'?'👪 '+(SY.fname||'Famille'):chName(c);}
+function chLeave(){document.querySelectorAll('.chz').forEach(x=>x.remove());if(CH.poll){clearInterval(CH.poll);CH.poll=null;}if(CH.rec)chRecStop(0);chAudStop();if(CH.vvf&&window.visualViewport){visualViewport.removeEventListener('resize',CH.vvf);visualViewport.removeEventListener('scroll',CH.vvf);CH.vvf=null;}CH.conv='';CH.sn={};CH.re=null;CH.ed=null;CH.pn={};CH.pi=0;CH.jumped=0;CH.rn=null;}
+/* ---- chat v2 : look WhatsApp, modifier, chercher, épingler, RDV/tâche, sondages ---- */
+const CHPK=['1️⃣','2️⃣','3️⃣','4️⃣'];
+const chIsPoll=m=>!!(m&&m.meta&&Array.isArray(m.meta.poll));
+function chPollHtml(m){const o=m.meta.poll,rx=(CH.rx&&CH.rx[m.id])||[],me=chMe(),tot=rx.filter(r=>CHPK.includes(r.e)).length;
+ return `<div class="chpl"><b dir="auto" data-nt>📊 ${esc(m.body||'')}</b>${o.map((t,i)=>{const n=rx.filter(r=>r.e===CHPK[i]).length,mine=rx.some(r=>r.u===me&&r.e===CHPK[i]),p=tot?Math.round(100*n/tot):0;return `<button class="chpo${mine?' on':''}" type="button" data-id="${m.id}" data-i="${i}"><i style="width:${p}%"></i><span dir="auto" data-nt>${esc(t)}</span><em>${n}</em></button>`;}).join('')}<div class="mini" data-nt>${tot} ${LGL(tot>1?'votes':'vote','صوت')}</div></div>`;}
+
+function chTk(m){if(m.sender!==chMe()||m.tmp||m.deleted)return '';const me=chMe(),fam=CH.conv==='fam';const ids=fam?chMem().filter(x=>x.id!==me).map(x=>x.id):[CH.conv];if(!ids.length)return '';
+ const some=ids.some(u=>(CH.sn[u]||0)>=m.id),all=ids.every(u=>(CH.sn[u]||0)>=m.id);
+ return `<span class="chtk${all?' on':''}" aria-hidden="true">${some?'✓✓':'✓'}</span>`;}
+function chSeenLine(m){if(m.sender!==chMe()||m.tmp||m.deleted)return '';const me=chMe(),fam=CH.conv==='fam';const ids=fam?chMem().filter(x=>x.id!==me).map(x=>x.id):[CH.conv];if(!ids.length)return '';
+ const seen=ids.filter(u=>(CH.sn[u]||0)>=m.id);if(!seen.length)return '';const all=seen.length===ids.length,ar=isAr();
+ return `<div class="chseen" data-nt>${fam?(all?(ar?'شاهدها الجميع':'Vu par tous'):(ar?'شاهدها ':'Vu par ')+esc(seen.map(u=>chName(u)).join(', '))):(ar?'شوهدت':'Vu')}</div>`;}
+
+function chRender(bottom,keep){const L=$('#chL');if(!L)return;const near=L.scrollHeight-L.scrollTop-L.clientHeight<140;CH.stick=!!(bottom||near);const h0=L.scrollHeight;let html='',day='',fam=CH.conv==='fam';
+ const firstR=!CH.rn||!CH.rn.size;if(!CH.rn)CH.rn=new Set();
+ if(CH.more)html+=`<button class="btn alt" id="chOl" type="button" style="align-self:center;margin:6px" data-nt>${LGL('↑ Messages plus anciens','↑ رسائل أقدم')}</button>`;
+ if(CH.err&&!CH.msgs.length)html+=`<div class="mini" style="text-align:center;margin:30px 10px">⚠️ Impossible de charger les messages.<div style="margin-top:6px" data-nt>${esc(CH.err)}</div><button class="btn" id="chRl" type="button" style="margin-top:10px">Réessayer</button></div>`;else if(!CH.msgs.length)html+=`<div class="mini" style="text-align:center;margin:30px 10px">Aucun message pour l'instant.<br>Écris le premier 👋</div>`;
+ let lm=null;for(let j=CH.msgs.length-1;j>=0;j--){const x=CH.msgs[j];if(x.sender===chMe()&&!x.tmp&&!x.deleted){lm=x.id;break;}}
+ const T=x=>new Date(x.created_at).getTime();
+ CH.msgs.forEach((m,i)=>{const d=new Date(m.created_at),dk=ld(d);if(dk!==day){day=dk;html+=`<div class="chd">${chDay(d)}</div>`;}
+  const mine=m.sender===chMe(),p=CH.msgs[i-1],n=CH.msgs[i+1];
+  const grp=!!p&&p.sender===m.sender&&ld(new Date(p.created_at))===dk&&T(m)-T(p)<300000,nxt=!!n&&n.sender===m.sender&&ld(new Date(n.created_at))===dk&&T(n)-T(m)<300000;
+  const poll=chIsPoll(m),pinned=!!(m.meta&&m.meta.pin)&&!m.deleted,ed=!!(m.meta&&m.meta.ed)&&!m.deleted;
+  const rx=(CH.rx[m.id]||[]),g={};if(!poll)rx.forEach(r=>{g[r.e]=g[r.e]||{n:0,me:0};g[r.e].n++;if(r.u===chMe())g[r.e].me=1;});
+  const pills=Object.entries(g).map(([e,v])=>`<button class="chrx ${v.me?'on':''}" type="button" data-id="${m.id}" data-e="${e}">${e}${v.n>1?' '+v.n:''}</button>`).join('');
+  const tk=chTk(m);const pend=m.tmp&&m.st!=='f'?'<span>⏳</span>':'';
+  const fail=m.tmp&&m.st==='f'?`<button class="chrt" type="button" data-id="${m.id}">⚠️ Non envoyé · réessayer</button>`:'';
+  const anim=!firstR&&!keep&&!CH.rn.has(m.id);
+  html+=`<div class="chm ${mine?'me':'th'}${grp?' cg':''}${nxt?' cn':''}${anim?' chnew':''}${pinned?' chpinned':''}" data-id="${m.id}">${!mine&&fam&&!grp?`<div class="chn" data-nt style="color:${chCol(m.sender)}">${chAvSpan(m.sender,chIni(m.sender),chCol(m.sender),'xs')}${esc(chName(m.sender))}</div>`:''}<div class="chb ${m.kind}${poll?' poll':''}">${chQuote(m)}${chBody(m,mine)}<span class="chmeta">${pinned?'<span>📌</span>':''}${ed?`<i data-nt>${LGL('modifié','معدّل')}</i>`:''}<span>${hhmm(d)}</span>${tk}${pend}${m.tmp||m.deleted?'':`<button class="chmn" type="button" data-id="${m.id}" aria-label="Options">⋯</button>`}</span></div>${pills?`<div class="chr">${pills}</div>`:''}${fail}${m.id===lm?chSeenLine(m):''}</div>`;});
+ L.innerHTML=html;chHydrate(L);chAudUI();CH.msgs.forEach(m=>CH.rn.add(m.id));
+ if(bottom||near)L.scrollTop=L.scrollHeight;else if(keep){CH.stick=false;L.scrollTop=L.scrollHeight-h0;}
+ const ty=$('#chTy');if(ty)chTypUI();chPinUI();chDnUI();}
+
+/* --- feuille d'actions (appui long) --- */
+function chReply(m){CH.ed=null;CH.re={id:m.id,s:m.sender,k:m.kind,t:chRePrev(m)};chReUI();}
+function chSheet(id){if(document.querySelector('.chsh2'))return;const m=CH.msgs.find(x=>String(x.id)===String(id));if(!m||m.tmp)return;const mine=m.sender===chMe(),poll=chIsPoll(m),txt=m.kind==='text'&&!m.deleted&&!poll,pinned=!!(m.meta&&m.meta.pin);
+ const A=(i,ic,t,x)=>`<button class="chact${x?' dng':''}" id="${i}" type="button"><span>${ic}</span><b data-nt>${t}</b></button>`;
+ const d=document.createElement('div');d.className='lv-ov chsh2 chbs';
+ d.innerHTML=`<div class="chsheet">${(m.deleted||poll)?'':`<div class="chem">${CHE.map(e=>`<button type="button" data-e="${e}">${e}</button>`).join('')}</div>`}<div class="chacts">${m.deleted?'':A('shRe','↩️',LGL('Répondre','رد'))}${txt?A('shCp','📋',LGL('Copier','نسخ')):''}${mine&&txt?A('shEd','✏️',LGL('Modifier','تعديل')):''}${m.deleted?'':A('shPn','📌',pinned?LGL('Désépingler','إلغاء التثبيت'):LGL('Épingler','تثبيت'))}${txt?A('shEv','📅',LGL('Créer un rendez-vous','إنشاء موعد'))+A('shTk','✅',LGL('Créer une tâche','إنشاء مهمة')):''}${mine&&!m.deleted?A('shDl','🗑️',LGL('Supprimer pour tous','حذف للجميع'),1):''}</div><button class="btn alt" id="shX" type="button">${LGL('Fermer','إغلاق')}</button></div>`;
+ document.body.appendChild(d);const close=()=>d.remove();d.onclick=e=>{if(e.target===d)close();};$('#shX',d).onclick=close;
+ d.querySelectorAll('.chem button').forEach(b=>b.onclick=()=>{close();chReact(m.id,b.dataset.e);});
+ const on=(i,f)=>{const b=$('#'+i,d);if(b)b.onclick=()=>{close();f();};};
+ on('shRe',()=>chReply(m));
+ on('shCp',()=>{try{navigator.clipboard.writeText(m.body||'');toast(LGL('Copié','تم النسخ'));}catch(e){toast(LGL('Copie impossible','تعذّر النسخ'));}});
+ on('shEd',()=>chEditStart(m));on('shPn',()=>chPin(m,!pinned));on('shEv',()=>chToItem(m,'ev'));on('shTk',()=>chToItem(m,'tk'));
+ const dl=$('#shDl',d);if(dl)dl.onclick=async()=>{close();if(!confirm('Supprimer ce message pour tout le monde ?'))return;try{await sbData('/rest/v1/rpc/chat_delete',{m:'POST',b:{mid:m.id}});m.deleted=true;m.body=null;m.meta=null;chPinSync(m);chRender();}catch(e){toast(frErr(e.message));}};}
+
+/* --- modifier --- */
+function chEditStart(m){CH.re=null;CH.ed={id:m.id};const t=$('#chT');if(t){t.value=m.body||'';t.dispatchEvent(new Event('input'));}chReUI();if(t)t.focus();}
+function chEditCancel(){CH.ed=null;const t=$('#chT');if(t){t.value='';t.style.height='auto';chSendBtn();}chReUI();}
+async function chEditSend(v){const ed=CH.ed,m=ed&&CH.msgs.find(x=>x.id===ed.id);CH.ed=null;const t=$('#chT');if(t){t.value='';t.style.height='auto';chSendBtn();}chReUI();
+ if(!m||v===m.body)return;const old={body:m.body,meta:m.meta};m.body=v;m.meta=Object.assign({},m.meta||{},{ed:1});chRender();
+ try{await sbData('/rest/v1/rpc/chat_edit',{m:'POST',b:{mid:m.id,b:v}});}catch(e){m.body=old.body;m.meta=old.meta;chRender();toast(LGL('Modification impossible','تعذّر التعديل')+(/function|PGRST|404|schema/i.test(String(e&&e.message||''))?' (mise à jour du serveur requise)':''),4500);}}
+function chReUI(){const R=$('#chRq');if(!R)return;
+ if(CH.ed){const o=CH.msgs.find(x=>x.id===CH.ed.id);R.style.display='flex';R.innerHTML=`<div class="chq2"><b data-nt>✏️ ${LGL('Modifier le message','تعديل الرسالة')}</b><span data-nt>${esc(String(o&&o.body||'').slice(0,80))}</span></div><button type="button" id="chRqX" aria-label="Annuler">✕</button>`;$('#chRqX').onclick=chEditCancel;return;}
+ const q=CH.re;if(!q){R.innerHTML='';R.style.display='none';return;}R.style.display='flex';
+ R.innerHTML=`<div class="chq2"><b data-nt>${esc(chReWho(q.s))}</b><span data-nt>${q.k==='text'?esc(q.t):esc(trS(q.t))}</span></div><button type="button" id="chRqX" aria-label="Annuler">✕</button>`;$('#chRqX').onclick=()=>{CH.re=null;chReUI();};const t=$('#chT');if(t)t.focus();}
+function chSendText(){const t=$('#chT');if(!t)return;const v=t.value.trim();if(!v)return;if(CH.ed){chEditSend(v.slice(0,2000));return;}t.value='';t.style.height='auto';chSendBtn();chPost({conv:CH.conv,kind:'text',body:v.slice(0,2000),meta:chMeta()});}
+
+/* --- épingler --- */
+function chPinSync(m){CH.pn=CH.pn||{};if(m&&m.meta&&m.meta.pin&&!m.deleted)CH.pn[m.id]={id:m.id,kind:m.kind,body:m.body,meta:m.meta,sender:m.sender};else if(m)delete CH.pn[m.id];}
+async function chPin(m,v){const old=m.meta;m.meta=Object.assign({},m.meta||{});if(v)m.meta.pin=1;else delete m.meta.pin;chPinSync(m);chRender();
+ try{await sbData('/rest/v1/rpc/chat_pin',{m:'POST',b:{mid:m.id,v}});toast(v?LGL('Message épinglé 📌','تم تثبيت الرسالة 📌'):LGL('Épingle retirée','تم إلغاء التثبيت'));}catch(e){m.meta=old;chPinSync(m);chRender();toast(LGL('Épinglage impossible','تعذّر التثبيت')+(/function|PGRST|404|schema/i.test(String(e&&e.message||''))?' (mise à jour du serveur requise)':''),4500);}}
+const chConvQ=conv=>conv==='fam'?'&to_user=is.null':'&or=(and(sender.eq.'+chMe()+',to_user.eq.'+conv+'),and(sender.eq.'+conv+',to_user.eq.'+chMe()+'))';
+async function chLoadPins(conv){try{const r=await sbData('/rest/v1/messages?select=id,kind,body,meta,sender&family_id=eq.'+SY.fid+'&deleted=eq.false&meta=cs.'+encodeURIComponent('{"pin":1}')+'&order=id.desc&limit=20'+chConvQ(conv))||[];if(CH.conv!==conv)return;CH.pn={};r.forEach(x=>{CH.pn[x.id]=x;});chPinUI();}catch(e){}}
+const chPinTxt=x=>x.meta&&Array.isArray(x.meta.poll)?'📊 '+String(x.body||''):chRePrev(x);
+function chPinUI(){const B=$('#chPn');if(!B)return;const l=Object.values(CH.pn||{}).sort((a,b)=>a.id-b.id);if(!l.length){B.style.display='none';return;}CH.pi=(CH.pi||0)%l.length;const x=l[CH.pi];B.style.display='flex';
+ B.innerHTML=`<span>📌</span><div class="chpt"><b data-nt>${l.length>1?(CH.pi+1)+'/'+l.length+' · ':''}${esc(chName(x.sender))}</b><span data-nt dir="auto">${esc(chPinTxt(x).slice(0,90))}</span></div>`;B.dataset.id=x.id;}
+
+/* --- aller à un message (même ancien) + bouton « bas » --- */
+async function chGoto(id){const el=document.querySelector('#chL .chm[data-id="'+String(id).replace(/[^0-9a-z]/gi,'')+'"]');if(el){chJump(id);return;}
+ try{const rows=await chFetch(CH.conv,{after:Number(id)-1});if(!rows.length){toast(LGL('Message introuvable','الرسالة غير موجودة'));return;}await chFetchRx(rows.map(x=>x.id));CH.msgs=rows;CH.more=1;CH.jumped=1;chRender(0,1);setTimeout(()=>chJump(id),80);}catch(e){toast(frErr(e.message));}}
+function chDnUI(){const L=$('#chL'),b=$('#chDn');if(!L||!b)return;const far=L.scrollHeight-L.scrollTop-L.clientHeight>420;b.style.display=(far||CH.jumped)?'flex':'none';}
+function chDnGo(){const L=$('#chL');if(CH.jumped){CH.jumped=0;chLoad(CH.conv);return;}if(L)L.scrollTo({top:L.scrollHeight,behavior:'smooth'});}
+
+/* --- recherche --- */
+function chSearchOpen(on){const S=$('#chSr');if(!S)return;S.style.display=on?'flex':'none';['#chL','#chRq','#chC','#chPn'].forEach(s=>{const e=$(s);if(e)e.style.display=on?'none':(s==='#chRq'?(CH.re||CH.ed?'flex':'none'):s==='#chPn'?(Object.keys(CH.pn||{}).length?'flex':'none'):'');});
+ if(on){const q=$('#chSq');q.value='';$('#chSl').innerHTML='';q.focus();}else{chRender();chReUI();chPinUI();}}
+let _chSt=0;
+function chSearchRun(){const term=String($('#chSq').value||'').trim();const L=$('#chSl');clearTimeout(_chSt);if(term.length<2){L.innerHTML=`<div class="mini" style="text-align:center;margin:24px" data-nt>${LGL('Tape au moins 2 lettres','اكتب حرفين على الأقل')}</div>`;return;}
+ _chSt=setTimeout(async()=>{const conv=CH.conv;try{const r=await sbData('/rest/v1/messages?select=id,sender,kind,body,created_at&family_id=eq.'+SY.fid+'&deleted=eq.false&body=ilike.'+encodeURIComponent('*'+term.replace(/[*%\\]/g,'')+'*')+'&order=id.desc&limit=30'+chConvQ(conv))||[];if(CH.conv!==conv||String($('#chSq').value||'').trim()!==term)return;
+  const re=new RegExp('('+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig');
+  L.innerHTML=r.length?r.map(x=>`<div class="chsrr" data-id="${x.id}"><div class="mini" data-nt>${esc(chName(x.sender))} · ${esc(chDay(new Date(x.created_at)))} ${hhmm(new Date(x.created_at))}</div><div dir="auto" data-nt>${esc(String(x.body||'').slice(0,160)).replace(re,'<mark>$1</mark>')}</div></div>`).join(''):`<div class="mini" style="text-align:center;margin:24px" data-nt>${LGL('Aucun résultat','لا نتائج')}</div>`;}catch(e){L.innerHTML=`<div class="mini" style="text-align:center;margin:24px" data-nt>${esc(frErr(e.message))}</div>`;}},350);}
+
+/* --- message → RDV / tâche --- */
+function chWhen(txt){const t=String(txt||'').toLowerCase().replace(/’/g,"'");let d='',tm='';const td=new Date(today()+'T12:00:00');
+ const mt=/(?:^|[^\d])([01]?\d|2[0-3])\s*(?:h|:)\s*([0-5]\d)?(?!\d)/.exec(t);if(mt)tm=String(mt[1]).padStart(2,'0')+':'+(mt[2]||'00');
+ const dm=/(^|[^\d])(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/.exec(t);
+ if(/après[- ]?demain/.test(t))d=addD(today(),2);else if(/\bdemain\b/.test(t))d=addD(today(),1);else if(/aujourd'?hui|ce soir|ce matin|cet après-midi/.test(t))d=today();
+ else if(dm){let y=dm[4]?+dm[4]:td.getFullYear();if(y<100)y+=2000;const mo=+dm[3],da=+dm[2];if(mo>=1&&mo<=12&&da>=1&&da<=31){let c=new Date(y,mo-1,da,12);if(!dm[4]&&c<td)c=new Date(y+1,mo-1,da,12);d=ld(c);}}
+ if(!d){const W=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];const i=W.findIndex(w=>new RegExp('\\b'+w+'\\b').test(t));if(i>=0){let k=(i-td.getDay()+7)%7;if(k===0)k=7;d=addD(today(),k);}}
+ if(!d){const m=/\ble\s+(\d{1,2})\b(?!\s*(?:h|:|\/))/.exec(t);if(m&&+m[1]>=1&&+m[1]<=31){let c=new Date(td.getFullYear(),td.getMonth(),+m[1],12);if(c<td)c=new Date(td.getFullYear(),td.getMonth()+1,+m[1],12);d=ld(c);}}
+ return {d,tm};}
+function chToItem(m,k){const w=chWhen(m.body||''),title=String(m.body||'').replace(/\s+/g,' ').trim().slice(0,80);
+ if(k==='ev')evForm(null,w.d||today());else tkForm(null,w.d||'');
+ const f=$('#f_t');if(f)f.value=title;if(w.tm&&$('#f_tm'))$('#f_tm').value=w.tm;
+ if(w.d||w.tm)toast(LGL('Date et heure détectées : vérifie 👍','تم اكتشاف التاريخ والوقت: تحقق 👍'),3000);}
+
+/* --- sondage --- */
+function chPollForm(){modal('📊 '+LGL('Nouveau sondage','استطلاع جديد'),`<label class="fl" data-nt>${LGL('Question','السؤال')}<input class="srch" id="pl_q" maxlength="120" placeholder="${LGL('Ex : On mange où dimanche ?','مثال: أين نأكل يوم الأحد؟')}"></label>${[1,2,3,4].map(i=>`<label class="fl" data-nt>${LGL('Option','خيار')} ${i}${i>2?' ('+LGL('facultatif','اختياري')+')':''}<input class="srch pl_o" maxlength="60"></label>`).join('')}`,
+ {onSave:d=>{const q=$('#pl_q',d).value.trim(),o=[...d.querySelectorAll('.pl_o')].map(x=>x.value.trim()).filter(Boolean);if(!q||o.length<2){toast(LGL('Une question et au moins 2 options','سؤال وخياران على الأقل'));return false;}chPost({conv:CH.conv,kind:'text',body:q.slice(0,120),meta:chMeta({poll:o.slice(0,4)})});}});}
+
+/* --- liste des discussions --- */
 function chListDraw(){const L=$('#chLs');if(!L)return;const ov=CH.ov,me=chMe();if(!ov){L.innerHTML='<div class="mini">Chargement…</div>';return;}
  const cv=id=>ov.convs.find(c=>c.conv===id);
- const row=(id,ic,name,col)=>{const c=cv(id),l=c&&c.last;return `<div class="card chrow" data-c="${id}">${chAvSpan(id,ic,col)}<div style="flex:1;min-width:0"><b data-nt>${esc(name)}</b><div class="mini chlp" dir="auto" data-nt>${l?(l.sender===me?(isAr()?'أنت : ':'Toi : '):'')+esc(chPrev(l)):trS('Aucun message')}</div></div>${l?`<span class="mini">${hhmm(new Date(l.created_at))}</span>`:''}${c&&c.unread?`<span class="chub">${c.unread}</span>`:''}</div>`;};
+ const row=(id,ic,name,col)=>{const c=cv(id),l=c&&c.last,un=c&&c.unread;return `<div class="chrow" data-c="${id}">${chAvSpan(id,ic,col)}<div class="chrb"><div class="chr1"><b data-nt>${esc(name)}</b>${l?`<span class="chtime${un?' un':''}">${hhmm(new Date(l.created_at))}</span>`:''}</div><div class="chr2"><span class="chlp" dir="auto" data-nt>${l?(l.sender===me?(isAr()?'أنت : ':'Toi : '):'')+esc(chPrev(l)):trS('Aucun message')}</span>${un?`<span class="chub">${un}</span>`:''}</div></div></div>`;};
  const others=ov.members.filter(m=>m.id!==me).sort((a,b)=>{const la=(cv(a.id)||{}).last,lb=(cv(b.id)||{}).last;return (lb?lb.created_at:'')<(la?la.created_at:'')?-1:(lb?lb.created_at:'')>(la?la.created_at:'')?1:a.name.localeCompare(b.name);});
- L.innerHTML=row('fam','👪',SY.fname||'Toute la famille','#8e24aa')+(others.length?'<div class="mini" style="margin:12px 4px 2px">Conversations à deux</div>':'')+others.map(m=>row(m.id,chIni(m.id),m.name,chCol(m.id))).join('')+(others.length?'':'<div class="mini" style="margin:12px 4px">Les autres membres de ta famille apparaîtront ici dès qu\'ils auront rejoint avec le code.</div>');
+ L.innerHTML=row('fam','👪',SY.fname||'Toute la famille','#8e24aa')+others.map(m=>row(m.id,chIni(m.id),m.name,chCol(m.id))).join('')+(others.length?'':'<div class="mini" style="margin:12px 4px">Les autres membres de ta famille apparaîtront ici dès qu\'ils auront rejoint avec le code.</div>');
  L.querySelectorAll('.chrow').forEach(r=>r.onclick=()=>go('chat/'+r.dataset.c));}
-function chLeave(){document.querySelectorAll('.chz').forEach(x=>x.remove());if(CH.poll){clearInterval(CH.poll);CH.poll=null;}if(CH.rec)chRecStop(0);chAudStop();if(CH.vvf&&window.visualViewport){visualViewport.removeEventListener('resize',CH.vvf);visualViewport.removeEventListener('scroll',CH.vvf);CH.vvf=null;}CH.conv='';CH.sn={};CH.re=null;}
+
+/* --- la conversation --- */
 function viewChat(conv){if(CH.conv&&CH.conv!==conv)chLeave();
  if(!SY.fid){setApp(`<div class="banner" style="--c:#00897b"><h1>💬 Discussions</h1></div><div class="card">Rejoins d'abord une famille pour pouvoir discuter avec elle.<div class="row" style="margin-top:8px"><button class="btn" onclick="go('fam')">👪 Rejoindre une famille</button></div></div>`);return;}
- if(!conv){CH.conv='';setApp(`<div class="banner" style="--c:#00897b"><h1>💬 Discussions</h1><div class="mini" style="color:#fff;opacity:.9">En direct · vocaux · photos</div></div><div class="mini" style="margin:6px 2px 10px">🔒 Les messages sont visibles uniquement par la famille.</div><div id="chLs"></div>`);chListDraw();chOverview();return;}
- CH.conv=conv;CH.msgs=[];CH.more=0;CH.sn={};CH.re=null;
- setApp(`<div class="chv" id="chV"><div class="chh"><button class="btn alt" id="chBk" type="button" style="padding:6px 12px">←</button><span id="chHav">${chHeadAv(conv)}</span><div style="flex:1;min-width:0"><b class="chtt">${esc(chTitle(conv))}</b><div class="mini" id="chTy" style="min-height:1em"></div></div>${conv!=='fam'?'<button class="btn alt" id="chCall" type="button" aria-label="Appeler" style="padding:6px 12px">📞</button>':''}</div><div class="chl" id="chL"><div class="mini" style="text-align:center;margin:30px">Chargement…</div></div><div id="chRq"></div><div class="chc" id="chC"></div></div>`);
+ if(!conv){CH.conv='';setApp(`<div class="chlh"><h1>💬 Discussions</h1></div><div id="chLs"></div><div class="mini chlock">🔒 Les messages sont visibles uniquement par la famille.</div>`);chListDraw();chOverview();return;}
+ CH.conv=conv;CH.msgs=[];CH.more=0;CH.sn={};CH.re=null;CH.ed=null;CH.pn={};CH.pi=0;CH.jumped=0;CH.rn=null;
+ setApp(`<div class="chv" id="chV"><div class="chh"><button class="chbk" id="chBk" type="button" aria-label="Retour">←</button><span id="chHav">${chHeadAv(conv)}</span><div style="flex:1;min-width:0"><b class="chtt">${esc(chTitle(conv))}</b><div class="mini" id="chTy" style="min-height:1em"></div></div><button class="chib" id="chSb" type="button" aria-label="Rechercher">🔍</button>${conv!=='fam'?'<button class="chib" id="chCall" type="button" aria-label="Appeler">📞</button>':''}</div><div id="chPn" class="chpn" style="display:none"></div><div id="chSr" class="chsr" style="display:none"><div class="chsrh"><button class="chbk" id="chSx" type="button" aria-label="Fermer">←</button><input id="chSq" class="srch" type="search" placeholder="${LGL('Rechercher dans la conversation','بحث في المحادثة')}"></div><div id="chSl" class="chsl"></div></div><div class="chl" id="chL"><div class="mini" style="text-align:center;margin:30px">Chargement…</div></div><button class="chdn" id="chDn" type="button" aria-label="Aller en bas" style="display:none">⬇</button><div id="chRq"></div><div class="chc" id="chC"></div></div>`);
  const V=$('#chV'),pos=()=>{const th=($('.top')||{}).offsetHeight||56,vv=window.visualViewport;V.style.top=((vv?vv.offsetTop:0)+th)+'px';V.style.height=((vv?vv.height:innerHeight)-th)+'px';V.style.bottom='auto';};pos();
- if(window.visualViewport){CH.vvf=()=>{if($('#chV')){pos();const L=$('#chL');if(L)L.scrollTop=L.scrollHeight;}};visualViewport.addEventListener('resize',CH.vvf);visualViewport.addEventListener('scroll',CH.vvf);}
- $('#chBk').onclick=()=>go('chat');const cb=$('#chCall');if(cb){cb.onclick=()=>chCallOpen(conv);phSync();}const L=$('#chL');chBindMedia(L);
+ if(window.visualViewport){CH.vvf=()=>{if($('#chV')){pos();const L=$('#chL');if(L&&!CH.jumped)L.scrollTop=L.scrollHeight;}};visualViewport.addEventListener('resize',CH.vvf);visualViewport.addEventListener('scroll',CH.vvf);}
+ $('#chBk').onclick=()=>go('chat');const cb=$('#chCall');if(cb){cb.onclick=()=>chCallOpen(conv);phSync();}
+ $('#chSb').onclick=()=>chSearchOpen(true);$('#chSx').onclick=()=>chSearchOpen(false);$('#chSq').oninput=chSearchRun;
+ $('#chSl').onclick=e=>{const r=e.target.closest('.chsrr');if(!r)return;chSearchOpen(false);setTimeout(()=>chGoto(r.dataset.id),50);};
+ $('#chPn').onclick=()=>{const id=$('#chPn').dataset.id;CH.pi=(CH.pi||0)+1;chPinUI();if(id)chGoto(id);};
+ $('#chDn').onclick=chDnGo;
+ const L=$('#chL');chBindMedia(L);L.addEventListener('scroll',chDnUI,{passive:true});
  L.addEventListener('click',e=>{const t=e.target;let b;
   if(b=t.closest('#chOl')){chOlder();return;}
   if(b=t.closest('#chRl')){chLoad(CH.conv);return;}
-  if(b=t.closest('.chq')){chJump(b.dataset.q);return;}
+  if(b=t.closest('.chq')){chGoto(b.dataset.q);return;}
   if(b=t.closest('.chmn')){chSheet(b.dataset.id);return;}
   if(b=t.closest('.chrx')){chReact(+b.dataset.id,b.dataset.e);return;}
+  if(b=t.closest('.chpo')){const id=b.dataset.id;if(/^\d+$/.test(id))chReact(+id,CHPK[+b.dataset.i]);return;}
   if(b=t.closest('.chrt')){const m=CH.msgs.find(x=>String(x.id)===b.dataset.id);if(m){m.st='p';chRender();chSend(m);}return;}
   if(b=t.closest('.chso')){const m=CH.msgs.find(x=>String(x.id)===b.dataset.id);if(m)chShareOpenItem(m);return;}
   if(b=t.closest('.chsa')){const m=CH.msgs.find(x=>String(x.id)===b.dataset.id);if(m)chShareAdd(m);return;}});
  L.addEventListener('contextmenu',e=>{const m=e.target.closest('.chm');if(m&&!e.target.closest('a')){e.preventDefault();chSheet(m.dataset.id);}});
+ /* appui long (tous les téléphones) + glisser pour répondre */
+ let lp=0,sx=0,sy=0,sw=null,dx=0;const rtl=()=>isAr()?-1:1;
+ L.addEventListener('touchstart',e=>{const el=e.target.closest('.chm');if(!el||e.touches.length!==1||e.target.closest('.cvr,.cvx'))return;sw=el;dx=0;sx=e.touches[0].clientX;sy=e.touches[0].clientY;clearTimeout(lp);lp=setTimeout(()=>{lp=0;if(sw){const id=sw.dataset.id;sw.style.transform='';sw=null;try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}chSheet(id);}},480);},{passive:true});
+ L.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],ddx=(t.clientX-sx)*rtl(),ddy=t.clientY-sy;if(Math.abs(ddy)>12||ddx<-12){clearTimeout(lp);lp=0;if(Math.abs(ddy)>12){sw.style.transform='';sw=null;return;}}if(ddx>10){clearTimeout(lp);lp=0;dx=ddx;sw.style.transition='none';sw.style.transform='translateX('+Math.min(ddx,70)*rtl()+'px)';}},{passive:true});
+ const end=()=>{clearTimeout(lp);lp=0;if(!sw)return;const el=sw;sw=null;el.style.transition='transform .18s';el.style.transform='';if(dx>58){const m=CH.msgs.find(x=>String(x.id)===el.dataset.id);if(m&&!m.tmp&&!m.deleted)chReply(m);}dx=0;};
+ L.addEventListener('touchend',end,{passive:true});L.addEventListener('touchcancel',end,{passive:true});
  chComposer();chLoad(conv);CH.poll=setInterval(()=>{if(CH.wsOk&&++CH.pc%5)return;chPoll();chTypUI();},4000);CH.pc=0;}
+
 function chComposer(){const C=$('#chC');if(!C)return;
  if(CH.rec){C.innerHTML=`<button class="btn alt chsend" id="chRc" type="button" aria-label="Annuler">🗑️</button><div class="chrec"><span class="chdot"></span><b id="chRt">0:00</b><span class="mini">Enregistrement…</span></div><button class="btn chsend" id="chRs" type="button" aria-label="Envoyer">➤</button>`;$('#chRc').onclick=()=>chRecStop(0);$('#chRs').onclick=()=>chRecStop(1);return;}
- C.innerHTML=`<button class="btn alt chsend" id="chA" type="button" aria-label="Joindre">📎</button><textarea id="chT" rows="1" dir="auto" placeholder="Écrire un message…"></textarea><button class="btn chsend" id="chS" type="button" data-m="r">🎤</button><input type="file" id="chF" accept="image/*" hidden>`;
+ C.innerHTML=`<button class="chib chplus" id="chA" type="button" aria-label="Joindre">＋</button><textarea id="chT" rows="1" dir="auto" placeholder="${LGL('Écrire un message…','اكتب رسالة…')}"></textarea><button class="btn chsend" id="chS" type="button" data-m="r">🎤</button><input type="file" id="chF" accept="image/*" hidden>`;
  const t=$('#chT');t.oninput=()=>{t.style.height='auto';t.style.height=Math.min(120,t.scrollHeight)+'px';chSendBtn();chTyping();};
- t.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();chSendText();}};
+ t.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();chSendText();}if(e.key==='Escape'&&CH.ed)chEditCancel();};
  $('#chS').onclick=()=>{if($('#chS').dataset.m==='s')chSendText();else chRecStart();};
- $('#chA').onclick=()=>{if($('#chMn')){$('#chMn').remove();return;}const m=document.createElement('div');m.id='chMn';m.className='chmenu';m.innerHTML='<button type="button" id="chM1">📷 Photo</button><button type="button" id="chM2">📅 RDV ou tâche</button>';C.appendChild(m);$('#chM1').onclick=()=>{m.remove();$('#chF').click();};$('#chM2').onclick=()=>{m.remove();chShareOpen();};};
+ $('#chA').onclick=()=>{if($('#chMn')){$('#chMn').remove();return;}const m=document.createElement('div');m.id='chMn';m.className='chmenu';m.innerHTML=`<button type="button" id="chM1">📷 ${LGL('Photo','صورة')}</button><button type="button" id="chM2">📅 ${LGL('RDV ou tâche','موعد أو مهمة')}</button><button type="button" id="chM3">📊 ${LGL('Sondage','استطلاع')}</button>`;C.appendChild(m);$('#chM1').onclick=()=>{m.remove();$('#chF').click();};$('#chM2').onclick=()=>{m.remove();chShareOpen();};$('#chM3').onclick=()=>{m.remove();chPollForm();};};
  $('#chF').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){toast('Choisis une photo');return;}let blob;try{blob=await chImgPrep(f);}catch(x){toast('Photo illisible ('+String(x&&x.message||x).slice(0,60)+')');return;}try{chPost({conv:CH.conv,kind:'image',meta:chMeta(),blob,mime:blob.type||'image/jpeg',ext:(blob.type||'').includes('png')?'png':(blob.type||'').includes('webp')?'webp':'jpg'});}catch(x){toast('Envoi impossible : '+String(x&&x.message||x).slice(0,60));}};}
 
 /* ---- temps réel ---- */
@@ -1583,9 +1674,9 @@ function chCatchUp(){chOverview();if(CH.conv){chPoll();chSeen();}}
 function chOnRt(d){const r=d.record||{},o=d.old_record||{};
  if(d.table==='msg_reactions'){const id=r.msg_id||o.msg_id;if(!id)return;const a=CH.rx[id]=CH.rx[id]||[];const u=r.user_id||o.user_id;const i=a.findIndex(x=>x.u===u);if(d.type==='DELETE'){if(i>=0)a.splice(i,1);}else if(i>=0)a[i].e=r.emoji;else a.push({u,e:r.emoji});if(CH.conv&&CH.msgs.some(x=>x.id===id))chRender();return;}
  if(d.table!=='messages')return;const me=chMe(),conv=chConvOf(r);
- if(d.type==='UPDATE'){const m=CH.msgs.find(x=>x.id===r.id);if(m){Object.assign(m,{deleted:r.deleted,body:r.body,meta:r.meta});chRender();}if(CH.ov){const c=CH.ov.convs.find(x=>x.conv===conv);if(c&&c.last&&c.last.id===r.id){c.last.deleted=r.deleted;c.last.body=r.body;}}return;}
+ if(d.type==='UPDATE'){const m=CH.msgs.find(x=>x.id===r.id);if(m){Object.assign(m,{deleted:r.deleted,body:r.body,meta:r.meta});chPinSync(m);chRender();}else if(CH.conv===conv&&CH.pn){chPinSync(r);chPinUI();}if(CH.ov){const c=CH.ov.convs.find(x=>x.conv===conv);if(c&&c.last&&c.last.id===r.id){c.last.deleted=r.deleted;c.last.body=r.body;}}return;}
  if(d.type!=='INSERT')return;
- if(CH.conv===conv){if(!CH.msgs.some(x=>x.id===r.id)){CH.msgs.push(r);chRender();}if(r.sender!==me)chRead();}
+ if(CH.conv===conv){if(!CH.jumped&&!CH.msgs.some(x=>x.id===r.id)){CH.msgs.push(r);chRender();}else if(CH.jumped)chDnUI();if(r.sender!==me)chRead();}
  if(r.sender===me)return;
  if(CH.conv===conv&&!document.hidden){chOvBump(conv,r,0);return;}
  chOvBump(conv,r,1);nfAdd('💬',chName(r.sender)+' : '+chPrev(r).slice(0,60),'chat/'+conv,'cm'+conv+':'+(CH.rm[conv]||0),'chat-'+(conv==='fam'?'fam':r.sender));}
