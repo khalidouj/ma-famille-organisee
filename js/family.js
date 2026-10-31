@@ -140,7 +140,7 @@ function viewPerson(id){const p=person(id);if(!p)return viewFam();const t=today(
  bindRows($('#app'));$('#pe').onclick=()=>pForm(id);$('#pa').onclick=()=>{evForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};$('#pt').onclick=()=>{tkForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};}
 /* ---- navigation bar ---- */
 const TABS=[['','🏠','Aujourd\'hui'],['cal','📅','Agenda'],['tasks','✅','Tâches'],['fam','👪','Famille'],['more','🧩','Plus']];
-function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const MORE=['more','etudes','log','mm','la','prayer','spirit','me','admin','sync','data','e','exam','review','science','search','code','penal','today','weak','art'];const cur=['','cal','tasks','fam'].includes(a)?a:(a==='p'||a==='chat'?'fam':MORE.includes(a)?'more':'');
+function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const MORE=['more','etudes','log','mm','la','prayer','spirit','me','admin','sync','data','e','exam','review','science','search','code','penal','today','weak','art','fiches','res'];const cur=['','cal','tasks','fam'].includes(a)?a:(a==='p'||a==='chat'?'fam':MORE.includes(a)?'more':'');
  nav.innerHTML=TABS.map(([h,e,l])=>`<button class="tb ${h===cur?'on':''}" onclick="go('${h}')"><span>${e}</span><small>${l}</small></button>`).join('');}
 /* ================= 🚚 LOGISTIQUE (profil Papa) ================= */
 const LG_TIPS=[
@@ -781,7 +781,7 @@ function laHome(){const p=laPts(),lv=laLevel(p),nx=laNext(),stk=laStreak(),done=
  ${LA_MOD.map((m,mi)=>{const ls=LA_LES.map((l,i)=>[l,i]).filter(x=>x[0].m===mi);return `<div class="plan"><h3>${m[0]} ${esc(m[1])}</h3>${ls.map(([l,i])=>{const op=laOpen(i),s=laStars(l.id);return `<div class="laLs ${op?'':'lock'}" data-l="${l.id}" role="button" tabindex="0"><span class="mmli">${op?l.ic:'🔒'}</span><div style="flex:1;min-width:0"><b>${esc(l.t)}</b></div><div class="mmst">${op?'⭐'.repeat(s)+'☆'.repeat(3-s):''}</div></div>`;}).join('')}</div>`;}).join('')}
  <div class="plan"><div class="mini">💡 Conseil : 5 minutes par jour valent mieux qu’une heure par semaine. Et pour bien réciter (tajwîd), écoute aussi un récitateur ou un enseignant : l’appli t’aide à <b>lire</b>.</div></div>`;}
 function laAbc(){return `${laLetCard(LAS.sel,LAS.sel+1,28)}<div class="plan"><h3>🔤 L’alphabet arabe</h3><div class="mini">Touche une lettre pour la voir en détail et l’entendre. Elle s’écrit de droite à gauche.</div><div class="laAl">${LA_LET.map((y,i)=>`<button type="button" class="laCell laSel ${i===LAS.sel?'on':''}" data-i="${i}"><span class="laa" lang="ar">${esc(y[0])}</span><small>${esc(y[1])}</small></button>`).join('')}</div></div>`;}
-function stDashCard(){if(S.nost)return '';return `<div class="plan stdash" onclick="go('etudes')" style="cursor:pointer"><h3>📚 Mes études</h3><div class="mini">Les grands procès · avancement <b>${overall()}%</b></div><div class="row" style="margin-top:8px"><button class="btn" type="button" onclick="event.stopPropagation();go('today')">▶️ Ma session du jour</button></div></div>`;}
+function stDashCard(){if(S.nost)return '';return `<div class="plan stdash" onclick="go('etudes')" style="cursor:pointer"><h3>📚 Mes études</h3><div class="mini">Les grands procès · avancement <b>${overall()}%</b></div><div class="row" style="margin-top:8px">${sxResumeBtn()}</div></div>`;}
 function laDashCard(){if(!S.la)return '';const nx=laNext(),p=laPts(),lv=laLevel(p),stk=laStreak();return `<div class="plan ladash" onclick="go('la')" style="cursor:pointer"><h3>🔤 J’apprends à lire l’arabe</h3><div class="mini">${lv.cur[2]} ${esc(lv.cur[1])} · 🔥 ${stk} jour${stk>1?'s':''}</div><div class="lgtt" style="margin-top:4px">${nx?(laStars(LA_LES[0].id)?'Prochaine leçon : ':'Première leçon : ')+'<b>'+esc(nx.t)+'</b>':'🎓 Parcours terminé !'}</div></div>`;}
 function viewLa(sub,extra){if(!S.la){location.hash='';return;}const TB=[['','🗺️','Parcours'],['abc','🔤','Alphabet']];
  if(sub==='l'){const i=LA_LES.findIndex(x=>x.id===extra);if(i<0||!laOpen(i)){location.hash='la';return;}}else{sub=sub==='abc'?'abc':'';LAS.id=null;LAS.items=null;LAS.qz=null;}
@@ -869,6 +869,107 @@ function meBind(sub){const A=$('#app'),c=()=>{};
  $('#acWp').onclick=async()=>{if(!confirm('Effacer toutes les données locales de cet appareil (personnes, rendez-vous, tâches, progression) ? Celles de ton compte en ligne sont conservées et seront rechargées.'))return;await resetUserData();route();syncNow();toast('Appareil nettoyé ✅');};
  const ad=$('#acAd');if(ad)ad.onclick=()=>go('admin');
  const ins=$('#acIn');if(ins)ins.onclick=()=>{if(DEFER){doInstall();}else toast(/iphone|ipad/i.test(navigator.userAgent)?(/crios|fxios|edgios|opios/i.test(navigator.userAgent)?'Ouvre ce lien dans Safari, puis touche Partager et « Sur l’écran d’accueil »':'Touche Partager puis « Sur l’écran d’accueil »'):'Menu ⋮ du navigateur, puis « Installer l’application »',6000);};}
+
+/* ---- sx: réussir l'examen (reprendre, fiches, ressources, actu 2026) ---- */
+const SX_AFF=[
+ [1,'Benalla','Affaire Benalla'],[1,'Cahuzac','Affaire Cahuzac'],
+ [2,'Marc Machin','Affaire Marc Machin'],[2,'Patrick Dils','Affaire Patrick Dils'],
+ [3,'Omar Raddad','Affaire Omar Raddad'],[3,'Dany Leprince','Affaire Dany Leprince'],
+ [4,'Marie Besnard','Affaire Marie Besnard'],[4,'Henri-Jean Jacomet','Affaire Jacomet'],
+ [5,'Abdelkader Merah','Affaire Abdelkader Merah'],[5,'Samuel Paty','Assassinat de Samuel Paty'],
+ [6,'Grégory Villemin','Affaire Grégory'],[6,'Émile Louis','Émile Louis disparues de l\'Yonne'],[6,'Guy Georges','Guy Georges'],[6,'Michel Fourniret','Michel Fourniret'],
+ [7,'Sœurs Papin','Affaire des sœurs Papin'],[7,'Alain Lamare','Alain Lamare'],[7,'Romain Dupuy','Romain Dupuy Pau'],[7,'Sarah Halimi','Affaire Sarah Halimi']];
+const sxWiki=q=>'https://fr.wikipedia.org/w/index.php?search='+encodeURIComponent(q);
+const sxYt=q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q);
+const sxA=(u,t)=>`<a class="sxl" href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`;
+
+function sxResume(){
+ const due=allQuestions().filter(x=>isDue(x.id)).length,w=weakItems().length,f=focusE(),ov=overall();
+ if(due>=8)return {i:'🔁',t:`Revoir ${due} questions`,s:'Elles sont prêtes : c\'est le meilleur moment pour les ancrer',h:'review'};
+ if(w>=8)return {i:'🎯',t:'Corriger mes points faibles',s:`${w} questions ratées à retravailler`,h:'weak'};
+ if(ov>=85)return {i:'🏛️',t:'Faire un examen blanc',s:'20 questions en 20 minutes, comme le jour J',h:'exam'};
+ const tb=nextTab(f);return {i:f.emoji,t:`Continuer l'étape ${f.n}`,s:`${f.title.split(':')[0]} · ${progress(f)}% fait`,h:`e/${f.n}/${tb}`};}
+function sxResumeBtn(){const r=sxResume();return `<button class="btn sxres" type="button" onclick="event.stopPropagation();go('${r.h}')"><span class="sxri">${r.i}</span><span><b>${esc(r.t)}</b><small>${esc(r.s)}</small></span></button>`;}
+
+function sxActu(short){
+ return `<div class="sxwarn" data-nt><b>⚠️ À jour 2026 — la CCD a changé</b><br>La <b>loi n° 2026-651 du 23 juillet 2026</b> (justice criminelle et respect des victimes), en vigueur depuis le <b>25 juillet 2026</b>, modifie les cours criminelles départementales. D'après le CNB : les crimes commis <b>en état de récidive légale</b> peuvent désormais relever de la CCD (art. 380-16 et 181-1 CPP) — alors que le cours (version d'avant la loi) les exclut.${short?'':' Le délai d\'audiencement revient à <b>un an</b> (art. 181 CPP) et des avocats honoraires pourront être assesseurs à partir du <b>1er janvier 2027</b>.'}<br><span class="mini">👉 À l'examen, réponds selon la version que <b>ton professeur</b> attend (demande-lui !) et vérifie sur Légifrance. <a class="sxl" href="#res/actu">Détails et sources</a></span></div>`;}
+
+function sxTerms(b){const seen=new Set(),out=[];(b.items||[]).forEach(it=>{if(typeof it!=='string')return;(it.match(/\*\*(.+?)\*\*/g)||[]).forEach(m=>{const t=m.slice(2,-2).trim();const k=t.toLowerCase();if(t.length<2||t.length>64||seen.has(k))return;seen.add(k);out.push(t);});});return out.slice(0,12);}
+function sxFiche(e){
+ const aff=SX_AFF.filter(a=>a[0]===e.n);
+ return `<section class="card sxf" style="--c:#${e.color};border-top:6px solid #${e.color}"><h2>${e.emoji} Étape ${e.n} · ${esc(e.title)}</h2><div class="mini">${esc(e.pages)}</div>
+ <div class="bref" style="margin-top:8px"><b>🔎 En bref</b><br>${rt(e.bref)}</div>
+ ${e.blocks.map(b=>{const t=sxTerms(b);return `<h3 class="sxh">${esc(b.h)}</h3>${t.length?`<div class="sxk">${t.map(x=>`<span class="chip" onclick="this.classList.toggle('rv')">${rt(x)}</span>`).join('')}</div>`:''}`;}).join('')}
+ ${aff.length?`<h3 class="sxh">🎬 Raconte chaque affaire en 4 temps</h3><div class="mini">faits → procédure → décision → enseignement juridique</div><div class="sxk">${aff.map(a=>`<span class="chip">${esc(a[1])}</span>`).join('')}</div>`:''}
+ <div class="row noprint" style="margin-top:10px"><button class="btn alt" onclick="go('e/${e.n}/cours')">📖 Relire le cours</button><button class="btn alt" onclick="go('e/${e.n}/quiz')">🎯 Quiz</button></div></section>`;}
+function viewFiches(sub){
+ const n=sub==='all'?'all':(sub===''||sub==null?'':+sub);
+ const nav=`<div class="row noprint"><button class="btn alt" id="sxHide">🙈 Mode rappel actif</button><button class="btn alt" onclick="window.print()">🖨️ Imprimer / PDF</button></div>`;
+ let body='';
+ if(n===''){
+  body=`<p>Un résumé par étape, fabriqué à partir de ton cours : les notions clés de chaque partie. <b>Astuce :</b> active le mode rappel, devine chaque notion, puis touche-la pour la révéler.</p>
+  <div class="grid2">${E.map(e=>`<div class="card" style="cursor:pointer;border-top:6px solid #${e.color}" onclick="go('fiches/${e.n}')"><b>${e.emoji} Étape ${e.n}</b><div>${esc(e.title)}</div><div class="mini">${esc(e.pages)} · ${progress(e)}% fait</div></div>`).join('')}</div>
+  <div class="row"><button class="btn" onclick="go('fiches/all')">📄 Toutes les fiches (à imprimer)</button></div>`;
+ }else if(n==='all'){body=nav+E.map(sxFiche).join('');}
+ else{const e=E.find(x=>x.n===n);if(!e)return viewFiches('');body=nav+sxFiche(e)+`<div class="row noprint">${n>0?`<button class="btn alt" onclick="go('fiches/${n-1}')">⬅️ Étape ${n-1}</button>`:''}${n<E.length-1?`<button class="btn alt" onclick="go('fiches/${n+1}')">Étape ${n+1} ➡️</button>`:''}</div>`;}
+ setApp(`<div class="sxroot" data-nt><div class="banner" style="--c:#00695c"><h1>📝 Fiches de révision</h1><div class="mini" style="color:#fff;opacity:.9">L'essentiel de chaque étape, sur une page</div></div>${n===0||n==='all'?sxActu(true):''}${body}<div class="row noprint"><button class="btn alt" onclick="go('etudes')">🏠 Retour aux études</button></div></div>`);
+ const hb=$('#sxHide');if(hb)hb.onclick=()=>{const r=document.querySelector('.sxroot');r.classList.toggle('sxhide');hb.textContent=r.classList.contains('sxhide')?'👀 Tout afficher':'🙈 Mode rappel actif';addXp(2);};
+}
+
+const SX_FMT={
+ qcm:['✅','QCM',["Lis la question en entier <b>puis toutes les propositions</b> avant de répondre.","Méfie-toi de « toujours », « jamais », « seulement », « obligatoirement ».","Élimine d'abord les propositions fausses ; si tu bloques, passe et reviens.","Entraîne-toi en conditions réelles : <a class=\"sxl\" href=\"#exam\">Examen blanc 20 questions / 20 min</a>."]],
+ cas:['⚖️','Cas pratique',["Dans l'ordre : <b>1) faits utiles · 2) problème de droit · 3) règle (texte ou jurisprudence) · 4) application aux faits · 5) conclusion</b>.","Ne raconte pas : <b>qualifie</b> les faits (quelle infraction, quelle juridiction, quelle procédure).","Cite les articles et les décisions, même de mémoire approximative : <a class=\"sxl\" href=\"#exam\">8 cas pratiques</a> pour t'entraîner."]],
+ diss:['✍️','Dissertation / question de cours',["Introduction : accroche, définition des termes, intérêt, <b>problématique</b>, annonce du plan.","Un plan en deux parties, deux sous-parties, avec des titres qui répondent au sujet.","Illustre chaque idée avec une affaire du cours (Machin, Dils, Raddad, Halimi…)."]],
+ oral:['🎤','Oral',["Prépare chaque affaire en 3 minutes : <b>faits → procédure → décision → enseignement</b>.","Entraîne-toi à voix haute, chronomètre en main.","Commence par une phrase d'accroche, finis par la leçon juridique."]]};
+function sxFmtCard(){
+ const f=S.xfmt&&SX_FMT[S.xfmt]?S.xfmt:'';
+ return `<div class="card"><b>Quel est le format de ton examen ?</b> <span class="mini">(demande-le à ton professeur si tu ne sais pas)</span>
+ <div class="sxk" style="margin-top:8px">${Object.entries(SX_FMT).map(([k,v])=>`<button class="lgcb ${f===k?'on':''}" type="button" data-f="${k}">${v[0]} ${v[1]}</button>`).join('')}</div>
+ ${f?`<ul style="margin:10px 0 0;padding-inline-start:20px;line-height:1.6">${SX_FMT[f][2].map(x=>`<li>${x}</li>`).join('')}</ul>`:'<div class="mini">Choisis ton format pour voir la méthode adaptée.</div>'}</div>`;}
+
+function sxPlan(){
+ const dl=daysLeft();
+ if(dl===null||dl<0)return `<div class="card"><b>📅 Planning de révision</b><div class="mini">Indique la date de ton examen et je te prépare un planning jour par jour.</div><div class="row"><button class="btn" onclick="go('etudes')">Renseigner la date</button></div></div>`;
+ const fd=n=>new Date(addD(today(),n)+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+ if(dl<7)return `<div class="card"><b>📅 J-${dl} : mode sprint</b><ul style="padding-inline-start:20px;line-height:1.7"><li>Chaque jour : <a class="sxl" href="#today">session du jour</a> + <a class="sxl" href="#weak">points faibles</a></li><li>Relis les <a class="sxl" href="#fiches">fiches</a> une fois par jour (mode rappel)</li><li>Un <a class="sxl" href="#exam">examen blanc</a> en conditions réelles</li><li>La veille : léger, couche-toi tôt. Le sommeil fixe la mémoire 🌙</li></ul></div>`;
+ const a0=dl>=21?.5:.45,b0=.25,c0=dl>=21?.15:.2;
+ let a=Math.max(1,Math.round(dl*a0)),b=Math.max(1,Math.round(dl*b0)),c=Math.max(1,Math.round(dl*c0)),d=dl-a-b-c;if(d<1){c=Math.max(1,c+d-1);d=dl-a-b-c;}
+ const ph=[[a,'🧠 Apprendre','Une étape tous les 2–3 jours : palais → cours → flashcards → quiz'],[b,'⚖️ Appliquer','Les 8 cas pratiques + <a class="sxl" href="#weak">points faibles</a>'],[c,'🔁 Mémoriser','Session du jour + <a class="sxl" href="#fiches">fiches</a> en mode rappel'],[d,'🏁 Dernière ligne droite','Examens blancs, relecture des fiches, sommeil']];
+ let cur=0;return `<div class="card"><b>📅 Planning · J-${dl}</b><div class="mini">calculé à partir de la date de ton examen</div>${ph.map(p=>{const s=cur,e=cur+p[0]-1;cur+=p[0];return `<div class="lgck"><b>${p[1]}</b> <span class="mini">· ${fd(s)} → ${fd(e)}</span><div class="mini">${p[2]}</div></div>`;}).join('')}</div>`;}
+
+function viewRes(sub){
+ const L=(u,t,d)=>`<div class="lgck">${sxA(u,t)}${d?`<div class="mini">${d}</div>`:''}</div>`;
+ setApp(`<div class="sxroot" data-nt><div class="banner" style="--c:#283593"><h1>🎓 Réussir l'examen</h1><div class="mini" style="color:#fff;opacity:.9">Méthode, planning, affaires réelles et liens utiles</div></div>
+ <div class="row"><button class="btn" onclick="go('fiches')">📝 Fiches de révision</button><button class="btn alt" onclick="go('exam')">🏛️ Examen blanc</button></div>
+ <div id="actu">${sxActu(false)}</div>
+ <h2>🗓️ Mon planning</h2>${sxPlan()}
+ <h2>🧭 Ma méthode</h2><div id="sxfmt">${sxFmtCard()}</div>
+ <div class="card"><b>Le réflexe « grand procès » : raconter chaque affaire en 4 temps</b><ol style="padding-inline-start:22px;line-height:1.7;margin:6px 0 0"><li><b>Les faits</b> : qui, quoi, quand (3 phrases max)</li><li><b>La procédure</b> : enquête, instruction, juridiction, voies de recours</li><li><b>La décision</b> : condamnation, acquittement, révision, irresponsabilité…</li><li><b>L'enseignement</b> : quelle règle de droit ou quelle limite de la justice cette affaire illustre ?</li></ol></div>
+ <div class="card"><b>⚠️ Pièges classiques (d'après ton cours)</b><ul style="padding-inline-start:20px;line-height:1.7;margin:6px 0 0"><li>Cour d'assises : <b>3 magistrats + 6 jurés</b> en 1re instance, <b>9 jurés</b> en appel.</li><li>CCD : <b>1 président + 4 assesseurs</b>, <b>pas de jurés</b>.</li><li>Procès équitable : <b>art. 6 CEDH</b> — à citer dès que la question touche aux droits de la défense, aux médias ou à la preuve.</li><li>Vérifie toujours la <a class="sxl" href="#res/actu">réforme de 2026</a> avant de répondre sur la CCD.</li></ul></div>
+ <h2>🎬 Les affaires du cours en vrai</h2><div class="mini">Pour t'imprégner des faits : lis la page d'encyclopédie, regarde un reportage. Puis reviens au cours pour la partie juridique (c'est elle qui est notée).</div>
+ ${E.filter(e=>e.n>0).map(e=>`<div class="card" style="border-inline-start:5px solid #${e.color}"><b>${e.emoji} Étape ${e.n}</b> <span class="mini">${esc(e.title)}</span>${SX_AFF.filter(a=>a[0]===e.n).map(a=>`<div class="lgck"><b>${esc(a[1])}</b><div class="mini">${sxA(sxWiki(a[2]),'📖 Wikipédia')} · ${sxA(sxYt(a[2]+' procès'),'▶️ Vidéos')}</div></div>`).join('')}</div>`).join('')}
+ <h2>🔗 Sources officielles</h2><div class="card">
+ ${L('https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006071154/','Code de procédure pénale (Légifrance)','Pour vérifier un article, et sa version en vigueur à la date voulue.')}
+ ${L('https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006070719/','Code pénal (Légifrance)')}
+ ${L('https://www.legifrance.gouv.fr/jorf/id/JORFSCTA000054470586','Loi n° 2026-651 du 23 juillet 2026 sur la justice criminelle et le respect des victimes','Texte officiel de la réforme.')}
+ ${L('https://cnb.avocat.fr/actualite/tout-savoir-sur-la-loi-justice-criminelle','Conseil national des barreaux : tout savoir sur la loi justice criminelle','Résumé clair des changements (CCD, délais, entrées en vigueur).')}
+ ${L('https://www.justice.gouv.fr/sites/default/files/2026-07/Annexe%201%20-%20Tableau%20entr%C3%A9e%20en%20vigueur%20des%20dispositions%20p%C3%A9nales%20de%20la%20loi%20JCRV.pdf','Ministère de la Justice : tableau d\'entrée en vigueur (PDF)','Quelle disposition s\'applique à partir de quelle date.')}
+ ${L('https://www.courdecassation.fr/','Cour de cassation','Arrêts et communiqués.')}
+ ${L('https://www.vie-publique.fr/','Vie-publique.fr','Fiches pédagogiques sur la justice et les institutions.')}
+ ${L('https://criminocorpus.org/','Criminocorpus','Histoire de la justice, des crimes et des prisons.')}
+ </div>
+ <h2>📰 Pour aller plus loin</h2><div class="card">
+ ${L('https://www.actu-juridique.fr/','Actu-Juridique','Actualité en droit pénal.')}
+ ${L('https://univ-droit.fr/','Portail Universitaire du droit','Ouvrages et ressources universitaires.')}
+ ${L('https://www.labase-lextenso.fr/gazette-du-palais/2026-n27/aspects-de-la-loi-du-23-juillet-2026-sur-la-justice-criminelle-et-le-respect-des-victimes-GPL493r9','Gazette du Palais : aspects de la loi du 23 juillet 2026','Analyse de la réforme (accès selon abonnement).')}
+ </div>
+ <div class="card"><b>📣 Les annales de TON examen</b><div class="mini" style="line-height:1.6">Les sujets de ton professeur ne sont en général pas publiés en ligne. Demande-les à ton université, à des camarades de l'année d'avant ou directement au professeur : <i>format, durée, barème, documents autorisés (Code ?)</i>. Dès que tu les as, entraîne-toi dessus après avoir fini les 8 étapes.</div></div>
+ <div class="card" style="text-align:center"><div style="font-size:1.1rem;line-height:1.9">🤲 <b>رَبِّ زِدْنِي عِلْمًا</b><div class="mini">« Seigneur, augmente mes connaissances. » (Coran 20:114)</div></div><div style="margin-top:8px;font-size:1.1rem;line-height:1.9"><b>فَإِنَّ مَعَ الْعُسْرِ يُسْرًا</b><div class="mini">« Avec la difficulté vient la facilité. » (Coran 94:6)</div></div><div class="mini" style="margin-top:8px">Tu as tout ce qu'il faut. Je suis fier de toi, quoi qu'il arrive 💖</div></div>
+ <div class="row noprint"><button class="btn alt" onclick="go('etudes')">🏠 Retour aux études</button></div></div>`);
+ viewResBind();
+ if(sub==='actu')setTimeout(()=>{const a=$('#actu');if(a)a.scrollIntoView({behavior:'smooth'});},60);
+}
+function viewResBind(){document.querySelectorAll('#sxfmt [data-f]').forEach(b=>b.onclick=()=>{S.xfmt=b.dataset.f;save();$('#sxfmt').innerHTML=sxFmtCard();viewResBind();});}
 
 /* ---- rappels ---- */
 function fireAt(date,tm,rm){if(rm==='m')return dtm(date,'08:00');const base=dtm(date,tm||'08:00');return new Date(base.getTime()-Number(rm)*60000);}

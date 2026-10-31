@@ -8,8 +8,11 @@ function viewHome(){setTimeout(bindPlan,0);
   <p>Droit pénal · ton cours complet, transformé en <b>aventure à mémoriser</b>.</p>
   <p class="mini" style="color:#fff;opacity:.9">🏁 Avancement total : <b>${overall()}%</b></p>
   <p class="mini" style="color:#fff;opacity:.8">8 étapes · ${stats} questions · palais mental · flashcards · révision espacée · examen type barreau</p>
-  <div class="row"><button class="btn" onclick="go('today')">▶️ Ma session du jour</button></div>
+  <div class="row">${sxResumeBtn()}<button class="btn alt" onclick="go('today')">▶️ Session du jour</button></div>
   <div class="stg">
+   <button class="stt" onclick="go('fiches')"><span>📝</span><b>Fiches</b><small>à réviser</small></button>
+   <button class="stt" onclick="go('res')"><span>🎓</span><b>Réussir</b><small>méthode & liens</small></button>
+   <button class="stt" onclick="go('res/actu')"><span>⚠️</span><b>Actu 2026</b><small>réforme CCD</small></button>
    <button class="stt" onclick="go('review')"><span>🔁</span><b>Révision</b><small>${due} à revoir</small></button>
    <button class="stt" onclick="go('exam')"><span>🏛️</span><b>Examen</b><small>type barreau</small></button>
    <button class="stt" onclick="go('science')"><span>🔬</span><b>Mémoire</b><small>la science</small></button>
@@ -38,6 +41,7 @@ function viewEtape(n,tab){const e=E.find(x=>x.n===n);if(!e)return viewHome();
  setApp(`<div style="--c:#${e.color}">
   <div class="banner"><div class="mini" style="color:#fff;opacity:.85">ÉTAPE ${e.n} · ${esc(e.pages.toUpperCase())}</div><h1>${e.emoji} ${esc(e.title)}</h1></div>
   <div class="bref"><b>🔎 En bref</b><br>${rt(e.bref)}</div>
+  ${e.n===0?sxActu(true):''}
   <div class="tabs">${tabs.map(t=>{const pp=parts(e);const v={palais:pp.p,cours:pp.c,cartes:pp.f,quiz:pp.q}[t[0]];const lab=v==null?'':v>=1?' ✓':v>0?' '+Math.round(v*100)+'%':'';return `<button class="tab ${t[0]===tab?'on':''}" onclick="go('e/${n}/${t[0]}')">${t[1]}${lab}</button>`;}).join('')}
    <button class="tab" onclick="go('etudes')" style="margin-left:auto">🏠</button></div>
   <div id="pane"></div></div>`);
@@ -107,6 +111,7 @@ function runQuiz(root,items,opt){
 function viewExam(){
  setApp(`<div class="banner" style="--c:#b71c1c"><h1>🏛️ QCM global · type examen du barreau</h1></div>
  <p>${rt(G.intro)}</p>
+ ${sxActu(true)}
  <div class="row"><button class="btn" id="blanc">⏱️ Examen blanc (20 questions, 20 min)</button><button class="btn alt" id="mix">🧩 Série mixte (${G.mixed.length})</button><button class="btn alt" id="allc">⚖️ Tous les cas pratiques</button></div>
  <h2>⚖️ Cas pratiques</h2><div class="grid2">${G.cases.map((c,i)=>`<div class="card" style="cursor:pointer" onclick="startCase(${i})"><b>${esc(c.title)}</b><div class="mini">${esc(c.theme)} · ${c.qs.length} questions</div><div class="mini">Meilleur : ${S.best['best:'+c.title]??'–'}%</div></div>`).join('')}</div><div id="ex"></div>`);
  $('#blanc').onclick=()=>{$('#ex').scrollIntoView();runQuiz($('#ex'),shuffle(allQuestions()).slice(0,20),{title:'Examen blanc',color:'#b71c1c',minutes:20});};
