@@ -1,39 +1,29 @@
 /* ---------- HOME ---------- */
 function viewHome(){setTimeout(bindPlan,0);
- const due=allQuestions().filter(x=>isDue(x.id)).length+allFlash().filter(x=>isDue(x.id)).length;
- const stats=allQuestions().length;
- setApp(`<div class="hero">
-  <span class="float" style="left:8%;top:12%">⚖️</span><span class="float" style="right:12%;top:18%;animation-delay:-2s">📚</span><span class="float" style="right:30%;bottom:8%;animation-delay:-4s">🧠</span>
-  <h1>Les grands procès du XXe et XXIe siècle</h1>
-  <p>Droit pénal · ton cours complet, transformé en <b>aventure à mémoriser</b>.</p>
-  <p class="mini" style="color:#fff;opacity:.9">🏁 Avancement total : <b>${overall()}%</b></p>
-  <p class="mini" style="color:#fff;opacity:.8">8 étapes · ${stats} questions · palais mental · flashcards · révision espacée · examen type barreau</p>
-  <div class="row">${sxResumeBtn()}<button class="btn alt" onclick="go('today')">▶️ Session du jour</button></div>
-  <div class="stg">
-   <button class="stt" onclick="go('fiches')"><span>📝</span><b>Fiches</b><small>à réviser</small></button>
-   <button class="stt" onclick="go('res')"><span>🎓</span><b>Réussir</b><small>méthode & liens</small></button>
-   <button class="stt" onclick="go('res/actu')"><span>⚠️</span><b>Actu 2026</b><small>réforme CCD</small></button>
-   <button class="stt" onclick="go('review')"><span>🔁</span><b>Révision</b><small>${due} à revoir</small></button>
-   <button class="stt" onclick="go('exam')"><span>🏛️</span><b>Examen</b><small>type barreau</small></button>
-   <button class="stt" onclick="go('science')"><span>🔬</span><b>Mémoire</b><small>la science</small></button>
-   <button class="stt" onclick="go('search')"><span>🔎</span><b>Chercher</b><small>dans le cours</small></button>
-   <button class="stt" onclick="go('code')"><span>📚</span><b>Code civil</b></button>
-   <button class="stt" onclick="go('penal')"><span>⚖️</span><b>Code pénal</b></button>
-  </div></div>
-  ${prayerCard()}
-  ${planCard()}
-  <h2>🗺️ Ta route (clique une étape)</h2>
-  <div class="stations">${E.map((e,i)=>`<div class="st" style="--c:#${e.color};animation-delay:${i*70}ms" onclick="go('e/${e.n}')">
-    <span class="n">${e.n}</span><div class="em">${e.emoji}</div><h3>${esc(e.title)}</h3><div class="mini">${esc(e.pages)}</div>
-    <div class="ring" title="Avancement : palais + cours + flashcards + quiz" style="--p:${progress(e)}"><span>${progress(e)}%</span></div>${(()=>{const p=parts(e);const f=x=>Math.round(100*x);return `<div class="pm"><span>🧠 ${f(p.p)}%</span><span>📖 ${f(p.c)}%</span>${p.f===null?'':`<span>🃏 ${f(p.f)}%</span>`}<span>🎯 ${f(p.q)}%</span></div>`;})()}</div>`).join('')}
-   <div class="st" style="--c:#b71c1c;animation-delay:600ms" onclick="go('exam')"><span class="n">G</span><div class="em">🏛️</div><h3>QCM global type barreau</h3><div class="mini">8 cas pratiques + questions mixtes</div></div></div>
-  <p style="text-align:center;margin-top:20px"><button class="btn" id="instBtn" style="display:none" onclick="doInstall()">📲 Installer l'appli</button></p>
-  <h2>🎯 Le truc pour retenir</h2>
-  <div class="grid2">
-   <div class="card"><b>1. Palais mental</b><br>Chaque étape est une pièce. Clique les objets : un fait = une image.</div>
-   <div class="card"><b>2. Rappel actif</b><br>Cache les textes, essaie de te souvenir, puis vérifie.</div>
-   <div class="card"><b>3. Répétition espacée</b><br>Tes erreurs reviennent plus souvent (boîtes de Leitner).</div>
-  </div>`);
+ const due=allQuestions().filter(x=>isDue(x.id)).length+allFlash().filter(x=>isDue(x.id)).length,w=weakItems().length,ov=overall(),dl=daysLeft();
+ const cd=(S.exam&&dl!==null&&dl>=0)?` · 📅 <b>J-${dl}</b>`:'';
+ const T=(h,i,t,sm,bd)=>`<button class="sxt" type="button" onclick="go('${h}')"><span class="sxti">${i}</span><b>${t}</b><small>${sm}</small>${bd?`<span class="mbadge">${bd}</span>`:''}</button>`;
+ setApp(`<div class="hero sxhero">
+  <h1>⚖️ Les grands procès</h1>
+  <p class="mini" style="color:#fff;opacity:.9">Droit pénal · avancement <b>${ov}%</b>${cd}</p>
+  <div class="gbar" style="background:rgba(255,255,255,.25)"><i style="width:${ov}%"></i></div>
+  <div class="row">${sxResumeBtn()}<button class="btn alt" onclick="go('today')">▶️ Session du jour</button></div></div>
+  <div class="sxtg">
+   ${T('review','🔁','Révision',due?due+' à revoir':'à jour',due>0?due:0)}
+   ${T('weak','🎯','Points faibles',w?w+' à corriger':'aucun',w>0?w:0)}
+   ${T('exam','🏛️','Examen','blanc & cas','')}
+   ${T('fiches','📝','Fiches','à réviser','')}
+   ${T('res','🎓','Réussir','méthode & liens','')}
+   ${T('res/actu','⚠️','Actu 2026','réforme CCD','')}
+  </div>
+  <h2>🗺️ Ma route</h2>
+  <div class="sxst">${E.map(e=>`<div class="stc" style="--c:#${e.color}" onclick="go('e/${e.n}')"><span class="em">${e.emoji}</span><div class="stcb"><b>Étape ${e.n}</b><span class="mini">${esc(e.title)}</span><div class="gbar"><i style="width:${progress(e)}%;background:#${e.color}"></i></div></div><span class="stcp">${progress(e)}%</span></div>`).join('')}
+   <div class="stc" style="--c:#b71c1c" onclick="go('exam')"><span class="em">🏛️</span><div class="stcb"><b>QCM global</b><span class="mini">8 cas pratiques + questions mixtes</span></div></div></div>
+  <details class="mesec" ${S.exam?'':'open'}><summary><span>🗓️</span><b>Mon plan & mes objectifs</b><i>›</i></summary><div class="mebody">${planCard()}</div></details>
+  <details class="mesec"><summary><span>🧰</span><b>Outils & astuces</b><i>›</i></summary><div class="mebody">
+   <div class="sxtg">${T('science','🔬','Mémoire','la science','')}${T('search','🔎','Chercher','dans le cours','')}${T('code','📚','Code civil','','')}${T('penal','⚖️','Code pénal','','')}</div>
+   <div class="mini" style="line-height:1.7;margin-top:10px"><b>Le truc pour retenir :</b> 1) palais mental : un fait = une image · 2) rappel actif : cache, essaie de te souvenir, vérifie · 3) répétition espacée : tes erreurs reviennent plus souvent.</div>
+   <p style="text-align:center"><button class="btn" id="instBtn" style="display:none" onclick="doInstall()">📲 Installer l'appli</button></p></div></details>`);
 }
 /* ---------- ETAPE ---------- */
 function viewEtape(n,tab){const e=E.find(x=>x.n===n);if(!e)return viewHome();

@@ -872,15 +872,24 @@ function meBind(sub){const A=$('#app'),c=()=>{};
 
 /* ---- sx: réussir l'examen (reprendre, fiches, ressources, actu 2026) ---- */
 const SX_AFF=[
- [1,'Benalla','Affaire Benalla'],[1,'Cahuzac','Affaire Cahuzac'],
- [2,'Marc Machin','Affaire Marc Machin'],[2,'Patrick Dils','Affaire Patrick Dils'],
- [3,'Omar Raddad','Affaire Omar Raddad'],[3,'Dany Leprince','Affaire Dany Leprince'],
- [4,'Marie Besnard','Affaire Marie Besnard'],[4,'Henri-Jean Jacomet','Affaire Jacomet'],
- [5,'Abdelkader Merah','Affaire Abdelkader Merah'],[5,'Samuel Paty','Assassinat de Samuel Paty'],
- [6,'Grégory Villemin','Affaire Grégory'],[6,'Émile Louis','Émile Louis disparues de l\'Yonne'],[6,'Guy Georges','Guy Georges'],[6,'Michel Fourniret','Michel Fourniret'],
- [7,'Sœurs Papin','Affaire des sœurs Papin'],[7,'Alain Lamare','Alain Lamare'],[7,'Romain Dupuy','Romain Dupuy Pau'],[7,'Sarah Halimi','Affaire Sarah Halimi']];
-const sxWiki=q=>'https://fr.wikipedia.org/w/index.php?search='+encodeURIComponent(q);
-const sxYt=q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q);
+ [1,'Benalla',[['Sénat · rapport d\'enquête de la commission des lois','https://www.senat.fr/salle-de-presse/201902/rapport-denquete-de-la-commission-des-lois-sur-laffaire-benalla.html']]],
+ [1,'Cahuzac',[['INA · L\'affaire Cahuzac','https://www.ina.fr/ina-eclaire-actu/l-affaire-cahuzac'],['INA · La Revue des médias : l\'enregistrement secret','https://larevuedesmedias.ina.fr/affaire-cahuzac-fraude-fiscale-fabrice-arfi-mediapart-source-enquete-enregistrement']]],
+ [2,'Marc Machin',[['INA · la demande de révision du procès','https://www.ina.fr/ina-eclaire-actu/video/pa00001402063/meurtre-d-une-femme-au-pont-de-neuilly-demande-de-revision-du-proces']]],
+ [2,'Patrick Dils',[['INA · décision de la Cour de révision','http://www.ina.fr/video/CAC01018256'],['INA · erreur judiciaire','https://www.ina.fr/ina-eclaire-actu/video/cab99023019/erreur-judiciaire-patrick-dils']]],
+ [3,'Omar Raddad',[['Légifrance · Cour de révision, 20 novembre 2002','https://www.legifrance.gouv.fr/juri/id/JURITEXT000007070659/'],['INA · 30 ans de rebondissements','https://www.ina.fr/ina-eclaire-actu/l-affaire-omar-raddad-30-ans-de-rebondissements']]],
+ [3,'Dany Leprince',[['INA · verdict du procès','https://www.ina.fr/ina-eclaire-actu/video/cab97143172/verdict-dany-leprince']]],
+ [4,'Marie Besnard',[['INA · trois procès et un acquittement','https://www.ina.fr/ina-eclaire-actu/l-affaire-marie-besnard']]],
+ [4,'Henri-Jean Jacomet',[]],
+ [5,'Abdelkader Merah',[['INA · un procès hors-normes','https://www.ina.fr/ina-eclaire-actu/video/s666539_001/affaire-merah-un-proces-hors-normes']]],
+ [5,'Samuel Paty',[]],
+ [6,'Grégory Villemin',[['INA · rappel en archives','https://www.ina.fr/ina-eclaire-actu/affaire-gregory-meurtre-enfant-1984-enquete-villemin-laroche-police-gendarmerie']]],
+ [6,'Émile Louis',[['INA · les aveux','https://www.ina.fr/ina-eclaire-actu/video/cac00064736/les-disparues-de-l-yonne-les-aveux-d-emile-louis'],['INA · la justice en cause','https://www.ina.fr/ina-eclaire-actu/video/1884795001016/la-justice-en-cause-dans-l-affaire-des-disparues-de-l-yonne']]],
+ [6,'Guy Georges',[['INA · verdict du procès','https://www.ina.fr/ina-eclaire-actu/video/cab01017024/verdict-du-proces-de-guy-georges']]],
+ [6,'Michel Fourniret',[['INA · Monique Olivier et le procès','https://www.ina.fr/ina-eclaire-actu/monique-olivier-michel-fourniret-proces-justice-viol']]],
+ [7,'Sœurs Papin',[['Criminocorpus · affaire Papin (1933)','https://criminocorpus.org/fr/bibliotheque/doc/3547/']]],
+ [7,'Alain Lamare',[['INA · arrestation du gendarme « tueur de l\'Oise »','http://www.ina.fr/video/RCC8903030449']]],
+ [7,'Romain Dupuy',[['Légifrance · cour d\'appel de Pau, 14 décembre 2007','https://www.legifrance.gouv.fr/juri/id/JURITEXT000019581726']]],
+ [7,'Sarah Halimi',[['Légifrance · Cass. crim., 14 avril 2021, n° 20-80.135','https://www.legifrance.gouv.fr/juri/id/JURITEXT000043473408'],['Ministère de la Justice · irresponsabilité pénale','https://www.justice.gouv.fr/actualites/espace-presse/irresponsabilite-penale']]]];
 const sxA=(u,t)=>`<a class="sxl" href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`;
 
 function sxResume(){
@@ -888,7 +897,7 @@ function sxResume(){
  if(due>=8)return {i:'🔁',t:`Revoir ${due} questions`,s:'Elles sont prêtes : c\'est le meilleur moment pour les ancrer',h:'review'};
  if(w>=8)return {i:'🎯',t:'Corriger mes points faibles',s:`${w} questions ratées à retravailler`,h:'weak'};
  if(ov>=85)return {i:'🏛️',t:'Faire un examen blanc',s:'20 questions en 20 minutes, comme le jour J',h:'exam'};
- const tb=nextTab(f);return {i:f.emoji,t:`Continuer l'étape ${f.n}`,s:`${f.title.split(':')[0]} · ${progress(f)}% fait`,h:`e/${f.n}/${tb}`};}
+ const tb=nextTab(f);return {i:f.emoji,t:`Continuer l'étape ${f.n}`,s:`${progress(f)}% fait`,h:`e/${f.n}/${tb}`};}
 function sxResumeBtn(){const r=sxResume();return `<button class="btn sxres" type="button" onclick="event.stopPropagation();go('${r.h}')"><span class="sxri">${r.i}</span><span><b>${esc(r.t)}</b><small>${esc(r.s)}</small></span></button>`;}
 
 function sxActu(short){
@@ -946,22 +955,18 @@ function viewRes(sub){
  <h2>🧭 Ma méthode</h2><div id="sxfmt">${sxFmtCard()}</div>
  <div class="card"><b>Le réflexe « grand procès » : raconter chaque affaire en 4 temps</b><ol style="padding-inline-start:22px;line-height:1.7;margin:6px 0 0"><li><b>Les faits</b> : qui, quoi, quand (3 phrases max)</li><li><b>La procédure</b> : enquête, instruction, juridiction, voies de recours</li><li><b>La décision</b> : condamnation, acquittement, révision, irresponsabilité…</li><li><b>L'enseignement</b> : quelle règle de droit ou quelle limite de la justice cette affaire illustre ?</li></ol></div>
  <div class="card"><b>⚠️ Pièges classiques (d'après ton cours)</b><ul style="padding-inline-start:20px;line-height:1.7;margin:6px 0 0"><li>Cour d'assises : <b>3 magistrats + 6 jurés</b> en 1re instance, <b>9 jurés</b> en appel.</li><li>CCD : <b>1 président + 4 assesseurs</b>, <b>pas de jurés</b>.</li><li>Procès équitable : <b>art. 6 CEDH</b> — à citer dès que la question touche aux droits de la défense, aux médias ou à la preuve.</li><li>Vérifie toujours la <a class="sxl" href="#res/actu">réforme de 2026</a> avant de répondre sur la CCD.</li></ul></div>
- <h2>🎬 Les affaires du cours en vrai</h2><div class="mini">Pour t'imprégner des faits : lis la page d'encyclopédie, regarde un reportage. Puis reviens au cours pour la partie juridique (c'est elle qui est notée).</div>
- ${E.filter(e=>e.n>0).map(e=>`<div class="card" style="border-inline-start:5px solid #${e.color}"><b>${e.emoji} Étape ${e.n}</b> <span class="mini">${esc(e.title)}</span>${SX_AFF.filter(a=>a[0]===e.n).map(a=>`<div class="lgck"><b>${esc(a[1])}</b><div class="mini">${sxA(sxWiki(a[2]),'📖 Wikipédia')} · ${sxA(sxYt(a[2]+' procès'),'▶️ Vidéos')}</div></div>`).join('')}</div>`).join('')}
+ <h2>🎬 Les affaires du cours : sources</h2><div class="mini">Uniquement des sources officielles ou institutionnelles (Légifrance, Sénat, ministère de la Justice, archives publiques de l'INA, Criminocorpus). Quand je n'en ai pas trouvé en ligne, c'est indiqué : ton cours fait foi. Pour l'examen, la partie juridique compte plus que le récit des faits.</div>
+ ${E.filter(e=>e.n>0).map(e=>`<details class="mesec"><summary><span>${e.emoji}</span><b>Étape ${e.n}</b><i>›</i></summary><div class="mebody">${SX_AFF.filter(a=>a[0]===e.n).map(a=>`<div class="lgck"><b>${esc(a[1])}</b>${a[2].length?a[2].map(l=>`<div class="mini">${sxA(l[1],esc(l[0]))}</div>`).join(''):'<div class="mini">Pas de source officielle trouvée en ligne : réfère-toi à ton cours.</div>'}</div>`).join('')}</div></details>`).join('')}
  <h2>🔗 Sources officielles</h2><div class="card">
  ${L('https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006071154/','Code de procédure pénale (Légifrance)','Pour vérifier un article, et sa version en vigueur à la date voulue.')}
  ${L('https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006070719/','Code pénal (Légifrance)')}
  ${L('https://www.legifrance.gouv.fr/jorf/id/JORFSCTA000054470586','Loi n° 2026-651 du 23 juillet 2026 sur la justice criminelle et le respect des victimes','Texte officiel de la réforme.')}
  ${L('https://cnb.avocat.fr/actualite/tout-savoir-sur-la-loi-justice-criminelle','Conseil national des barreaux : tout savoir sur la loi justice criminelle','Résumé clair des changements (CCD, délais, entrées en vigueur).')}
  ${L('https://www.justice.gouv.fr/sites/default/files/2026-07/Annexe%201%20-%20Tableau%20entr%C3%A9e%20en%20vigueur%20des%20dispositions%20p%C3%A9nales%20de%20la%20loi%20JCRV.pdf','Ministère de la Justice : tableau d\'entrée en vigueur (PDF)','Quelle disposition s\'applique à partir de quelle date.')}
+ ${L('https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006071154/LEGISCTA000006138099/','Révision et réexamen : CPP, art. 622 à 626-1','Le texte qui encadre les erreurs judiciaires (Machin, Dils, Raddad, Leprince).')}
  ${L('https://www.courdecassation.fr/','Cour de cassation','Arrêts et communiqués.')}
  ${L('https://www.vie-publique.fr/','Vie-publique.fr','Fiches pédagogiques sur la justice et les institutions.')}
  ${L('https://criminocorpus.org/','Criminocorpus','Histoire de la justice, des crimes et des prisons.')}
- </div>
- <h2>📰 Pour aller plus loin</h2><div class="card">
- ${L('https://www.actu-juridique.fr/','Actu-Juridique','Actualité en droit pénal.')}
- ${L('https://univ-droit.fr/','Portail Universitaire du droit','Ouvrages et ressources universitaires.')}
- ${L('https://www.labase-lextenso.fr/gazette-du-palais/2026-n27/aspects-de-la-loi-du-23-juillet-2026-sur-la-justice-criminelle-et-le-respect-des-victimes-GPL493r9','Gazette du Palais : aspects de la loi du 23 juillet 2026','Analyse de la réforme (accès selon abonnement).')}
  </div>
  <div class="card"><b>📣 Les annales de TON examen</b><div class="mini" style="line-height:1.6">Les sujets de ton professeur ne sont en général pas publiés en ligne. Demande-les à ton université, à des camarades de l'année d'avant ou directement au professeur : <i>format, durée, barème, documents autorisés (Code ?)</i>. Dès que tu les as, entraîne-toi dessus après avoir fini les 8 étapes.</div></div>
  <div class="card" style="text-align:center"><div style="font-size:1.1rem;line-height:1.9">🤲 <b>رَبِّ زِدْنِي عِلْمًا</b><div class="mini">« Seigneur, augmente mes connaissances. » (Coran 20:114)</div></div><div style="margin-top:8px;font-size:1.1rem;line-height:1.9"><b>فَإِنَّ مَعَ الْعُسْرِ يُسْرًا</b><div class="mini">« Avec la difficulté vient la facilité. » (Coran 94:6)</div></div><div class="mini" style="margin-top:8px">Tu as tout ce qu'il faut. Je suis fier de toi, quoi qu'il arrive 💖</div></div>
