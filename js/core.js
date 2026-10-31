@@ -120,5 +120,6 @@ function route(){const h=location.hash.slice(1);window.scrollTo(0,0);const [a,b,
  if(a==='sync')return viewSync();
  if(a==='art'){viewCode(b);const i=artIdx(b).get(decodeURIComponent(c||'').toLowerCase());if(i!==undefined)ccArt(i,()=>go(b==='civil'?'code':'penal'));return;}
  viewDash();syPromo();}
-function setApp(html){const a=$('#app');a.innerHTML=html;a.firstElementChild&&0;observe();}
+function sxBackBar(){try{const r=location.hash.slice(1).split('/')[0];if(!document.body.classList.contains('study')||['etudes','spirit',''].includes(r)||S.stl==='o')return '';return `<div class="sxback noprint" data-nt><button class="sxbk" type="button" onclick="go('etudes')">⬅️ <span>Mes études de droit</span></button></div>`;}catch(e){return '';}}
+function setApp(html){const a=$('#app');a.innerHTML=sxBackBar()+html;a.firstElementChild&&0;observe();}
 function observe(){const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target);}}),{threshold:.1});document.querySelectorAll('.pt,.tle').forEach((el,i)=>{el.style.transitionDelay=(i%6)*60+'ms';io.observe(el);});}
