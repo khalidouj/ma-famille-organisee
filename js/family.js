@@ -140,8 +140,9 @@ function viewPerson(id){const p=person(id);if(!p)return viewFam();const t=today(
  bindRows($('#app'));$('#pe').onclick=()=>pForm(id);$('#pa').onclick=()=>{evForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};$('#pt').onclick=()=>{tkForm();setTimeout(()=>{const b=document.querySelector(`.fm .pk[data-id="${id}"]`);b&&b.click();},30);};}
 /* ---- navigation bar ---- */
 const TABS=[['','🏠','Aujourd\'hui'],['cal','📅','Agenda'],['tasks','✅','Tâches'],['fam','👪','Famille'],['more','🧩','Plus']];
-function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const MORE=['more','etudes','log','mm','la','prayer','spirit','me','admin','sync','data','e','exam','review','science','search','code','penal','today','weak','art','fiches','res'];const cur=['','cal','tasks','fam'].includes(a)?a:(a==='p'||a==='chat'?'fam':MORE.includes(a)?'more':'');
- nav.innerHTML=TABS.map(([h,e,l])=>`<button class="tb ${h===cur?'on':''}" onclick="go('${h}')"><span>${e}</span><small>${l}</small></button>`).join('');}
+function renderTabs(a){const nav=$('#tabbar');if(!nav)return;const MORE=['more','etudes','log','mm','la','prayer','spirit','me','admin','sync','data','e','exam','review','science','search','code','penal','today','weak','art','fiches','res','aff','redac'];const dr=S.stl==='h'&&!S.nost,ST=['etudes','e','exam','review','science','search','code','penal','today','weak','fiches','res','aff','redac'];const cur=['','cal','tasks','fam'].includes(a)?a:(a==='p'||a==='chat'?'fam':(dr&&ST.includes(a))?'etudes':MORE.includes(a)?'more':'');
+ const TB=dr?TABS.slice(0,4).concat([['etudes','⚖️','Droit']],TABS.slice(4)):TABS;
+ nav.innerHTML=TB.map(([h,e,l])=>`<button class="tb ${h===cur?'on':''}" onclick="go('${h}')"><span>${e}</span><small>${l}</small></button>`).join('');}
 /* ================= 🚚 LOGISTIQUE (profil Papa) ================= */
 const LG_TIPS=[
 {f:"Un EVP (ou TEU) est l'unité de mesure des conteneurs : 1 EVP = un conteneur de 20 pieds. Un 40 pieds = 2 EVP.",a:"الـ EVP (أو TEU) وحدة لقياس الحاويات: 1 EVP = حاوية 20 قدماً. وحاوية 40 قدماً = 2 EVP."},
@@ -895,6 +896,7 @@ const sxA=(u,t)=>`<a class="sxl" href="${u}" target="_blank" rel="noopener noref
 function sxResume(){
  const due=allQuestions().filter(x=>isDue(x.id)).length,w=weakItems().length,f=focusE(),ov=overall();
  if(due>=8)return {i:'🔁',t:`Revoir ${due} questions`,s:'Elles sont prêtes : c\'est le meilleur moment pour les ancrer',h:'review'};
+ if(sxAffDueN()>=3)return {i:'🎬',t:`Revoir ${sxAffDueN()} affaires`,s:'rappel actif : raconte-les sans regarder',h:'aff'};
  if(w>=8)return {i:'🎯',t:'Corriger mes points faibles',s:`${w} questions ratées à retravailler`,h:'weak'};
  if(ov>=85)return {i:'🏛️',t:'Faire un examen blanc',s:'20 questions en 20 minutes, comme le jour J',h:'exam'};
  const tb=nextTab(f);return {i:f.emoji,t:`Continuer l'étape ${f.n}`,s:`${progress(f)}% fait`,h:`e/${f.n}/${tb}`};}
@@ -936,20 +938,10 @@ function sxFmtCard(){
  <div class="sxk" style="margin-top:8px">${Object.entries(SX_FMT).map(([k,v])=>`<button class="lgcb ${f===k?'on':''}" type="button" data-f="${k}">${v[0]} ${v[1]}</button>`).join('')}</div>
  ${f?`<ul style="margin:10px 0 0;padding-inline-start:20px;line-height:1.6">${SX_FMT[f][2].map(x=>`<li>${x}</li>`).join('')}</ul>`:'<div class="mini">Choisis ton format pour voir la méthode adaptée.</div>'}</div>`;}
 
-function sxPlan(){
- const dl=daysLeft();
- if(dl===null||dl<0)return `<div class="card"><b>📅 Planning de révision</b><div class="mini">Indique la date de ton examen et je te prépare un planning jour par jour.</div><div class="row"><button class="btn" onclick="go('etudes')">Renseigner la date</button></div></div>`;
- const fd=n=>new Date(addD(today(),n)+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
- if(dl<7)return `<div class="card"><b>📅 J-${dl} : mode sprint</b><ul style="padding-inline-start:20px;line-height:1.7"><li>Chaque jour : <a class="sxl" href="#today">session du jour</a> + <a class="sxl" href="#weak">points faibles</a></li><li>Relis les <a class="sxl" href="#fiches">fiches</a> une fois par jour (mode rappel)</li><li>Un <a class="sxl" href="#exam">examen blanc</a> en conditions réelles</li><li>La veille : léger, couche-toi tôt. Le sommeil fixe la mémoire 🌙</li></ul></div>`;
- const a0=dl>=21?.5:.45,b0=.25,c0=dl>=21?.15:.2;
- let a=Math.max(1,Math.round(dl*a0)),b=Math.max(1,Math.round(dl*b0)),c=Math.max(1,Math.round(dl*c0)),d=dl-a-b-c;if(d<1){c=Math.max(1,c+d-1);d=dl-a-b-c;}
- const ph=[[a,'🧠 Apprendre','Une étape tous les 2–3 jours : palais → cours → flashcards → quiz'],[b,'⚖️ Appliquer','Les 8 cas pratiques + <a class="sxl" href="#weak">points faibles</a>'],[c,'🔁 Mémoriser','Session du jour + <a class="sxl" href="#fiches">fiches</a> en mode rappel'],[d,'🏁 Dernière ligne droite','Examens blancs, relecture des fiches, sommeil']];
- let cur=0;return `<div class="card"><b>📅 Planning · J-${dl}</b><div class="mini">calculé à partir de la date de ton examen</div>${ph.map(p=>{const s=cur,e=cur+p[0]-1;cur+=p[0];return `<div class="lgck"><b>${p[1]}</b> <span class="mini">· ${fd(s)} → ${fd(e)}</span><div class="mini">${p[2]}</div></div>`;}).join('')}</div>`;}
-
 function viewRes(sub){
  const L=(u,t,d)=>`<div class="lgck">${sxA(u,t)}${d?`<div class="mini">${d}</div>`:''}</div>`;
  setApp(`<div class="sxroot" data-nt><div class="banner" style="--c:#283593"><h1>🎓 Réussir l'examen</h1><div class="mini" style="color:#fff;opacity:.9">Méthode, planning, affaires réelles et liens utiles</div></div>
- <div class="row"><button class="btn" onclick="go('fiches')">📝 Fiches de révision</button><button class="btn alt" onclick="go('exam')">🏛️ Examen blanc</button></div>
+ <div class="row"><button class="btn" onclick="go('fiches')">📝 Fiches de révision</button><button class="btn alt" onclick="go('aff')">🎬 Les affaires</button><button class="btn alt" onclick="go('redac')">✍️ Cas à rédiger</button><button class="btn alt" onclick="go('exam')">🏛️ Examen blanc</button></div>
  <div id="actu">${sxActu(false)}</div>
  <h2>🗓️ Mon planning</h2>${sxPlan()}
  <h2>🧭 Ma méthode</h2><div id="sxfmt">${sxFmtCard()}</div>
@@ -974,8 +966,94 @@ function viewRes(sub){
  viewResBind();
  if(sub==='actu')setTimeout(()=>{const a=$('#actu');if(a)a.scrollIntoView({behavior:'smooth'});},60);
 }
-function viewResBind(){document.querySelectorAll('#sxfmt [data-f]').forEach(b=>b.onclick=()=>{S.xfmt=b.dataset.f;save();$('#sxfmt').innerHTML=sxFmtCard();viewResBind();});}
+function viewResBind(){const ag=$('#sxAg');if(ag)ag.onclick=()=>{const tm=$('#sxTm').value||'20:00';const n=sxAgendaAdd(tm);toast(n?n+' événements ajoutés à l\'agenda 📅':'Rien à ajouter');route();};const rm=$('#sxAgRm');if(rm)rm.onclick=ev=>{ev.preventDefault();sxAgendaRm();toast('Retiré de l\'agenda');route();};document.querySelectorAll('#sxfmt [data-f]').forEach(b=>b.onclick=()=>{S.xfmt=b.dataset.f;save();$('#sxfmt').innerHTML=sxFmtCard();viewResBind();});}
 
+/* ---- sx2: affaires (rappel actif), cas rédigés, planning agenda ---- */
+const SX_KEYS=['Benalla','Cahuzac','Marc Machin','Patrick Dils','Omar Raddad','Dany Leprince','Marie Besnard','Jacomet','Merah','Paty','Grégory','Émile Louis','Guy Georges','Fourniret','Papin','Lamare','Dupuy','Halimi'];
+let _sxAF=null;
+function sxAffs(){if(_sxAF)return _sxAF;_sxAF=SX_AFF.map((a,i)=>{const e=E.find(x=>x.n===a[0]);const b=e.blocks.find(x=>x.h.includes(SX_KEYS[i]))||e.blocks[0];const m=/p\.\s*(\d+)(?:\s*-\s*(\d+))?/.exec(b.h)||[];const p1=+m[1]||0,p2=+(m[2]||m[1])||0;return {i,name:a[1],n:a[0],e,b,p1,p2,links:a[2]};});return _sxAF;}
+const SX_IV=[1,3,10];
+function sxAffSt(i){return (S.aff||{})[i]||null;}
+function sxAffDue(i){const s=sxAffSt(i);return !!s&&addD(s.d,SX_IV[s.r]||1)<=today();}
+function sxAffDueN(){return sxAffs().filter(a=>sxAffDue(a.i)).length;}
+function sxAffDot(i){const s=sxAffSt(i);return s?['🔴','🟡','🟢'][s.r]:'⚪';}
+function sxAffQz(a){return itemsOf(a.e).filter(q=>q.p>=a.p1&&q.p<=a.p2);}
+function viewAff(sub){
+ const A=sxAffs();if(sub!==''&&A[+sub])return viewAffOne(+sub);
+ const due=A.filter(a=>sxAffDue(a.i)),seen=A.filter(a=>sxAffSt(a.i)).length;
+ const row=a=>`<div class="card sxrow" style="cursor:pointer;border-inline-start:5px solid #${a.e.color}" onclick="go('aff/${a.i}')"><span class="sxdot">${sxAffDot(a.i)}</span><div><b>${esc(a.name)}</b><div class="mini">Étape ${a.n} · cours p. ${a.p1}${a.p2!==a.p1?'–'+a.p2:''}${sxAffDue(a.i)?' · ⏰ à revoir':''}</div></div><span class="sp"></span>➜</div>`;
+ setApp(`<div class="sxroot" data-nt><div class="banner" style="--c:#6a1b9a"><h1>🎬 Les 18 affaires</h1><div class="mini" style="color:#fff;opacity:.9">${seen}/18 travaillées${due.length?' · '+due.length+' à revoir aujourd\'hui':''}</div></div>
+ <div class="card"><b>La méthode (rappel actif)</b><div class="mini" style="line-height:1.6">Pour chaque affaire : <b>raconte-la sans regarder ton cours</b> (faits → procédure → décision → enseignement), puis vérifie et note-toi honnêtement. 🔴 revient demain, 🟡 dans 3 jours, 🟢 dans 10 jours.</div></div>
+ ${due.length?`<h2>⏰ À revoir aujourd'hui</h2>${due.map(row).join('')}`:''}
+ <h2>Toutes les affaires</h2>${E.filter(e=>e.n>0).map(e=>`<h3 class="sxh">${e.emoji} Étape ${e.n}</h3>${A.filter(a=>a.n===e.n).map(row).join('')}`).join('')}</div>`);
+}
+function viewAffOne(i){
+ const A=sxAffs(),a=A[i];S.affn=S.affn||{};const nt=S.affn[i]||{};const qz=sxAffQz(a);
+ const bl=a.b.items.filter(x=>typeof x==='string');
+ setApp(`<div class="sxroot" data-nt style="--c:#${a.e.color}"><div class="banner" style="--c:#${a.e.color}"><div class="mini" style="color:#fff;opacity:.85">AFFAIRE ${i+1}/18 · ÉTAPE ${a.n}</div><h1>${a.e.emoji} ${esc(a.name)}</h1></div>
+ <div class="card"><b>🧠 Raconte-la sans regarder ton cours</b><div class="mini">Écris quelques mots, ou dis-le à voix haute : l'effort de rappel est ce qui fixe la mémoire.</div>
+ ${[['f','1. Les faits','qui, quoi, quand'],['p','2. La procédure','enquête, instruction, juridiction, recours'],['d','3. La décision','condamnation, acquittement, révision…'],['e',"4. L'enseignement juridique",'quelle règle ou quelle limite de la justice ?']].map(([k,l,h])=>`<label class="fl" style="margin-top:8px"><b>${l}</b> <span class="mini">${h}</span><textarea class="srch sxnt" data-k="${k}" rows="2">${esc(nt[k]||'')}</textarea></label>`).join('')}
+ <div class="row"><button class="btn" id="sxRev" type="button">👀 Vérifier avec le cours</button></div></div>
+ <div id="sxAns" style="display:none">
+  <div class="card" style="border-top:6px solid #${a.e.color}"><b>📖 Ton cours</b> <span class="mini">${esc(a.b.h)}</span><ul class="sxul">${bl.map(x=>`<li>${rt(x)}</li>`).join('')}</ul><div class="row"><button class="btn alt" onclick="go('e/${a.n}/cours')">📖 Ouvrir le cours</button></div></div>
+  ${a.links.length?`<div class="card"><b>🔗 Sources</b>${a.links.map(l=>`<div class="mini">${sxA(l[1],esc(l[0]))}</div>`).join('')}</div>`:`<div class="mini">Pas de source officielle trouvée en ligne : ton cours fait foi.</div>`}
+  <div class="card"><b>Comment ça s'est passé ?</b><div class="row" style="margin-top:8px"><button class="btn alt" data-r="0" type="button">🔴 À revoir</button><button class="btn alt" data-r="1" type="button">🟡 Moyen</button><button class="btn alt" data-r="2" type="button">🟢 Bien</button></div><div class="mini">🔴 demain · 🟡 dans 3 jours · 🟢 dans 10 jours</div></div>
+  ${qz.length?`<div class="row"><button class="btn" id="sxQzb" type="button">🎯 Quiz sur cette affaire (${qz.length})</button></div><div id="sxQz"></div>`:''}</div>
+ <div class="row noprint">${i>0?`<button class="btn alt" onclick="go('aff/${i-1}')">⬅️ ${esc(A[i-1].name)}</button>`:''}${i<A.length-1?`<button class="btn alt" onclick="go('aff/${i+1}')">${esc(A[i+1].name)} ➡️</button>`:''}</div></div>`);
+ let tmr=0;document.querySelectorAll('.sxnt').forEach(t=>t.oninput=()=>{clearTimeout(tmr);tmr=setTimeout(()=>{S.affn=S.affn||{};const o=S.affn[i]=S.affn[i]||{};document.querySelectorAll('.sxnt').forEach(x=>o[x.dataset.k]=x.value);save();},600);});
+ $('#sxRev').onclick=()=>{$('#sxAns').style.display='';$('#sxRev').style.display='none';$('#sxAns').scrollIntoView({behavior:'smooth'});};
+ document.querySelectorAll('#sxAns [data-r]').forEach(b=>b.onclick=()=>{S.aff=S.aff||{};S.aff[i]={r:+b.dataset.r,d:today()};save();addXp(5);toast(['🔴 Elle reviendra demain','🟡 Rendez-vous dans 3 jours','🟢 Bravo ! Dans 10 jours'][+b.dataset.r]);go('aff');});
+ const qb=$('#sxQzb');if(qb)qb.onclick=()=>{$('#sxQz').scrollIntoView({behavior:'smooth'});runQuiz($('#sxQz'),qz,{title:'Quiz · '+a.name,color:'#'+a.e.color,shuffleQ:true});};
+}
+
+const SX_STEPS=['Faits utiles','Problème de droit','Règle (texte, jurisprudence)','Application aux faits','Conclusion'];
+function viewRedac(sub){
+ S.red=S.red||{};
+ if(sub!==''&&G.cases[+sub])return viewRedacOne(+sub);
+ setApp(`<div class="sxroot" data-nt><div class="banner" style="--c:#b71c1c"><h1>✍️ Cas pratiques à rédiger</h1><div class="mini" style="color:#fff;opacity:.9">Écris ta réponse, puis compare avec le corrigé du cours</div></div>
+ <div class="card"><b>La méthode en 5 temps</b><div class="sxk">${SX_STEPS.map((s,k)=>`<span class="chip">${k+1}. ${s}</span>`).join('')}</div><div class="mini">Ne raconte pas : qualifie les faits, cite les règles, applique-les.</div></div>
+ <div class="grid2">${G.cases.map((c,i)=>{const r=S.red[i];return `<div class="card" style="cursor:pointer" onclick="go('redac/${i}')"><b>${esc(c.title)}</b><div class="mini">${esc(c.theme)} · ${c.qs.length} points</div><div class="mini">${r?'✅ Auto-évaluation : '+r.s+'%':'⚪ Pas encore fait'}</div></div>`;}).join('')}</div>
+ <div class="row noprint"><button class="btn alt" onclick="go('exam')">🏛️ Retour aux examens</button></div></div>`);
+}
+function viewRedacOne(i){
+ const c=G.cases[i],r=S.red[i]||{};
+ setApp(`<div class="sxroot" data-nt><div class="banner" style="--c:#b71c1c"><div class="mini" style="color:#fff;opacity:.85">CAS PRATIQUE ${i+1}/${G.cases.length} · ${esc(c.theme)}</div><h1>${esc(c.title)}</h1></div>
+ ${i===0?sxActu(true):''}
+ <div class="card"><b>📋 Les faits</b><div style="margin-top:6px;line-height:1.6">${rt(c.facts)}</div></div>
+ <div class="card"><b>✍️ Ta réponse</b><div class="sxk">${SX_STEPS.map((s,k)=>`<span class="chip">${k+1}. ${s}</span>`).join('')}</div>
+ <textarea class="srch" id="rdT" rows="12" placeholder="Rédige ta réponse en suivant les 5 temps…" style="width:100%;margin-top:6px">${esc(r.t||'')}</textarea>
+ <div class="row"><button class="btn" id="rdSee" type="button">📖 Voir le corrigé</button></div></div>
+ <div id="rdAns" style="display:none"><div class="mini">Corrigé construit à partir des réponses et explications de ton cours (ce n'est pas un corrigé officiel).</div>
+ ${c.qs.map((q,j)=>{const right=q.o?q.o[q.a]:(q.a?'Vrai':'Faux');return `<div class="card"><b>${j+1}. ${rt(q.q)}</b><div style="color:var(--ok);margin-top:4px">✔ ${rt(right)}</div><div class="mini" style="line-height:1.6">${rt(q.e||'')}${q.p?' (cours p. '+q.p+')':''}</div><label class="fl" style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" class="rdck" data-j="${j}" ${(r.ok||[])[j]?'checked':''}> Je l'avais traité dans ma réponse</label></div>`;}).join('')}
+ <div class="row"><button class="btn" id="rdFin" type="button">✅ Terminer et noter</button></div><div id="rdRes"></div></div>
+ <div class="row noprint">${i>0?`<button class="btn alt" onclick="go('redac/${i-1}')">⬅️ Cas ${i}</button>`:''}${i<G.cases.length-1?`<button class="btn alt" onclick="go('redac/${i+1}')">Cas ${i+2} ➡️</button>`:''}<button class="btn alt" onclick="go('redac')">📋 Liste</button></div></div>`);
+ let tmr=0;$('#rdT').oninput=()=>{clearTimeout(tmr);tmr=setTimeout(()=>{S.red[i]=Object.assign(S.red[i]||{},{t:$('#rdT').value});save();},600);};
+ $('#rdSee').onclick=()=>{$('#rdAns').style.display='';$('#rdSee').style.display='none';$('#rdAns').scrollIntoView({behavior:'smooth'});};
+ $('#rdFin').onclick=()=>{const ok=[...document.querySelectorAll('.rdck')].map(x=>x.checked);const s=Math.round(100*ok.filter(Boolean).length/ok.length);S.red[i]={t:$('#rdT').value,ok,s,d:today()};save();addXp(10);
+  $('#rdRes').innerHTML=`<div class="card" style="text-align:center"><div style="font-size:2rem;font-weight:800">${s}%</div><div>${s>=80?'🌟 Excellent, tu maîtrises ce cas !':s>=50?'👍 Bien, reprends les points manqués.':'💪 Pas grave : relis le cours puis recommence, tu vas progresser.'}</div><div class="row" style="justify-content:center"><button class="btn alt" onclick="go('redac')">📋 Autres cas</button>${s<70?`<button class="btn alt" onclick="go('weak')">🎯 Points faibles</button>`:''}</div></div>`;$('#rdRes').scrollIntoView({behavior:'smooth'});};
+}
+
+function sxPhases(dl){
+ const a0=dl>=21?.5:.45,b0=.25,c0=dl>=21?.15:.2;
+ let a=Math.max(1,Math.round(dl*a0)),b=Math.max(1,Math.round(dl*b0)),c=Math.max(1,Math.round(dl*c0)),d=dl-a-b-c;if(d<1){c=Math.max(1,c+d-1);d=dl-a-b-c;}
+ return [[a,'🧠 Apprendre','Une étape tous les 2–3 jours : palais → cours → flashcards → quiz'],[b,'⚖️ Appliquer','Les 8 cas pratiques + <a class="sxl" href="#redac">cas à rédiger</a> + <a class="sxl" href="#weak">points faibles</a>'],[c,'🔁 Mémoriser','Session du jour + <a class="sxl" href="#aff">affaires</a> + <a class="sxl" href="#fiches">fiches</a> en mode rappel'],[d,'🏁 Dernière ligne droite','Examens blancs, relecture des fiches, sommeil']];}
+function sxAgendaN(){return evs().filter(x=>x.sx).length;}
+function sxAgendaAdd(tm){
+ const dl=daysLeft();if(dl===null||dl<1)return 0;
+ S.ev=evs().filter(x=>!x.sx);
+ const now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+ let k=0,n=0;const days=[];sxPhases(dl).forEach(p=>{for(let x=0;x<p[0];x++){days.push([k,p[1]]);k++;}});
+ days.slice(0,60).forEach(([k,ph])=>{if(k===0&&tm<=hm)return;evs().push({id:uid(),t:'📚 Droit · '+ph.replace(/^\S+\s/,''),d:addD(today(),k),tm,w:[],pl:'',nt:'Séance de révision (planning de l\'appli)',rp:'',rm:'15',sx:1,by:S.me||''});n++;});
+ evs().push({id:uid(),t:'🎓 EXAMEN de droit',d:S.exam,tm:'',w:[],pl:'',nt:'Bon courage ! 🤍',rp:'',rm:'1440',sx:1,by:S.me||''});n++;
+ S.sxtm=tm;save();setTimeout(()=>{try{famTick();}catch(e){}},300);return n;}
+function sxAgendaRm(){S.ev=evs().filter(x=>!x.sx);save();}
+function sxPlan(){
+ const dl=daysLeft();
+ if(dl===null||dl<0)return `<div class="card"><b>📅 Planning de révision</b><div class="mini">Indique la date de ton examen et je te prépare un planning jour par jour.</div><div class="row"><button class="btn" onclick="go('etudes')">Renseigner la date</button></div></div>`;
+ const fd=n=>new Date(addD(today(),n)+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+ const ag=dl>=1?`<div class="card" style="margin-top:10px"><b>📅 Mettre ce planning dans l'agenda</b><div class="mini">Une séance par jour (jusqu'à 60 jours) + le jour de l'examen, avec rappel. <b>Visible par toute la famille</b>, pour qu'on puisse t'encourager 🤍</div><div class="row" style="align-items:flex-end"><label class="fl" style="flex:1">Heure<input type="time" id="sxTm" class="srch" value="${S.sxtm||'20:00'}"></label><button class="btn" id="sxAg" type="button">📅 Ajouter</button></div>${sxAgendaN()?`<div class="mini" style="margin-top:6px">✅ ${sxAgendaN()} événements dans l'agenda · <a class="sxl" href="#" id="sxAgRm">les retirer</a></div>`:''}</div>`:'';
+ if(dl<7)return `<div class="card"><b>📅 J-${dl} : mode sprint</b><ul style="padding-inline-start:20px;line-height:1.7"><li>Chaque jour : <a class="sxl" href="#today">session du jour</a> + <a class="sxl" href="#weak">points faibles</a></li><li>Relis les <a class="sxl" href="#fiches">fiches</a> et les <a class="sxl" href="#aff">affaires</a> en rappel actif</li><li>Un <a class="sxl" href="#exam">examen blanc</a> en conditions réelles</li><li>La veille : léger, couche-toi tôt. Le sommeil fixe la mémoire 🌙</li></ul></div>${ag}`;
+ let cur=0;return `<div class="card"><b>📅 Planning · J-${dl}</b><div class="mini">calculé à partir de la date de ton examen</div>${sxPhases(dl).map(p=>{const s=cur,e=cur+p[0]-1;cur+=p[0];return `<div class="lgck"><b>${p[1]}</b> <span class="mini">· ${fd(s)} → ${fd(e)}</span><div class="mini">${p[2]}</div></div>`;}).join('')}</div>${ag}`;}
 /* ---- rappels ---- */
 function fireAt(date,tm,rm){if(rm==='m')return dtm(date,'08:00');const base=dtm(date,tm||'08:00');return new Date(base.getTime()-Number(rm)*60000);}
 function famTick(){try{if(!SY.at||loveOpen||document.querySelector('.fm,.lv-ov'))return;const now=Date.now();S.rf=S.rf||{};

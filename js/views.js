@@ -14,7 +14,7 @@ function viewHome(){setTimeout(bindPlan,0);
    ${T('exam','🏛️','Examen','blanc & cas','')}
    ${T('fiches','📝','Fiches','à réviser','')}
    ${T('res','🎓','Réussir','méthode & liens','')}
-   ${T('res/actu','⚠️','Actu 2026','réforme CCD','')}
+   ${T('aff','🎬','Affaires','rappel actif',sxAffDueN()>0?sxAffDueN():0)}
   </div>
   <h2>🗺️ Ma route</h2>
   <div class="sxst">${E.map(e=>`<div class="stc" style="--c:#${e.color}" onclick="go('e/${e.n}')"><span class="em">${e.emoji}</span><div class="stcb"><b>Étape ${e.n}</b><span class="mini">${esc(e.title)}</span><div class="gbar"><i style="width:${progress(e)}%;background:#${e.color}"></i></div></div><span class="stcp">${progress(e)}%</span></div>`).join('')}
@@ -102,7 +102,7 @@ function viewExam(){
  setApp(`<div class="banner" style="--c:#b71c1c"><h1>🏛️ QCM global · type examen du barreau</h1></div>
  <p>${rt(G.intro)}</p>
  ${sxActu(true)}
- <div class="row"><button class="btn" id="blanc">⏱️ Examen blanc (20 questions, 20 min)</button><button class="btn alt" id="mix">🧩 Série mixte (${G.mixed.length})</button><button class="btn alt" id="allc">⚖️ Tous les cas pratiques</button></div>
+ <div class="row"><button class="btn" id="blanc">⏱️ Examen blanc (20 questions, 20 min)</button><button class="btn alt" id="mix">🧩 Série mixte (${G.mixed.length})</button><button class="btn alt" id="allc">⚖️ Tous les cas pratiques</button><button class="btn alt" onclick="go('redac')">✍️ Cas à rédiger</button></div>
  <h2>⚖️ Cas pratiques</h2><div class="grid2">${G.cases.map((c,i)=>`<div class="card" style="cursor:pointer" onclick="startCase(${i})"><b>${esc(c.title)}</b><div class="mini">${esc(c.theme)} · ${c.qs.length} questions</div><div class="mini">Meilleur : ${S.best['best:'+c.title]??'–'}%</div></div>`).join('')}</div><div id="ex"></div>`);
  $('#blanc').onclick=()=>{$('#ex').scrollIntoView();runQuiz($('#ex'),shuffle(allQuestions()).slice(0,20),{title:'Examen blanc',color:'#b71c1c',minutes:20});};
  $('#mix').onclick=()=>{$('#ex').scrollIntoView();runQuiz($('#ex'),G.mixed.map((q,i)=>({...q,id:qid('gm',i)})),{title:'Série mixte',color:'#b71c1c',shuffleQ:true});};
